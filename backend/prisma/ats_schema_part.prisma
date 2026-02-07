@@ -1,0 +1,103 @@
+
+// ============= ATS & RECRUITMENT SYSTEM (NEW) =============
+
+model JobInterview {
+  id              String   @id @default(cuid())
+  
+  applicationId   String
+  application     JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  // Round Details
+  roundName       String   // e.g. "Technical Round 1", "HR Round"
+  roundType       InterviewRoundType @default(TECHNICAL)
+  
+  // Schedule
+  scheduledAt     DateTime
+  duration        Int      @default(30) // minutes
+  meetingLink     String?
+  location        String?  // For offline
+  
+  // Interviewer
+  interviewerId   String
+  interviewer     User     @relation(fields: [interviewerId], references: [id])
+  
+  // Outcome
+  status          InterviewStatus @default(SCHEDULED)
+  feedback        String?  @db.Text
+  score           Int?     // 1-10 or 1-100
+  result          InterviewResult? // PASS/FAIL
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model EmailLog {
+  id          String   @id @default(cuid())
+  
+  // Context
+  jobId           String?
+  applicationId   String?
+  application     JobApplication? @relation(fields: [applicationId], references: [id])
+  
+  recipientEmail  String
+  recipientName   String?
+  
+  templateName    String // e.g. "APPLICATION_RECEIVED"
+  subject         String
+  body            String @db.Text
+  
+  status          EmailStatus @default(SENT)
+  sentAt          DateTime @default(now())
+  error           String?
+  
+  triggeredBy     String? // User ID who triggered this
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  entityType  String   // JOB, APPLICATION, INTERVIEW
+  entityId    String
+  action      String   // CREATE, UPDATE, DELETE, STATUS_CHANGE
+  
+  // For Application Context
+  applicationId String?
+  application   JobApplication? @relation(fields: [applicationId], references: [id])
+  
+  performedBy   String
+  details       Json?    // { oldStatus: "APPLIED", newStatus: "SHORTLISTED" }
+  
+  timestamp     DateTime @default(now())
+}
+
+model SavedFilter {
+  id          String   @id @default(cuid())
+  name        String
+  userId      String   // Recruiter ID
+  page        String   // "CANDIDATES" or "JOBS"
+  
+  config      Json     // { source: ["INTERNAL"], minExperience: 2 }
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum InterviewRoundType {
+  SCREENING
+  TECHNICAL
+  MANAGERIAL
+  HR
+  FINAL
+  OTHER
+}
+
+enum InterviewResult {
+  PASSED
+  FAILED
+  ON_HOLD
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+  QUEUED
+}

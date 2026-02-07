@@ -1,0 +1,117 @@
+"use client"
+
+import * as React from 'react';
+import { authApi, userApi } from '@/lib/api';
+
+interface User {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    permissions?: string[];
+    avatar?: string;
+}
+
+interface AuthContextType {
+    user: User | null;
+    isLoading: boolean;
+    isAuthenticated: boolean;
+    login: (email: string, password: string) => Promise<void>;
+    register: (email: string, password: string, name: string) => Promise<void>;
+    logout: () => void;
+    refreshUser: () => Promise<void>;
+    hasPermission: (permission: string) => boolean;
+}
+
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+    const [user, setUser] = React.useState<User | null>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    const isAuthenticated = !!user;
+
+    // Load user from localStorage on mount
+    React.useEffect(() => {
+        const loadUser = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    const response = await userApi.getMe();
+                    setUser(response.data.user);
+                }
+            } catch (error) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadUser();
+    }, []);
+
+    const login = async (email: string, password: string) => {
+        const response = await authApi.login({ email, password });
+        const { token, user } = response.data;
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+    };
+
+    const register = async (email: string, password: string, name: string) => {
+        const response = await authApi.register({ email, password, name });
+        const { token, user } = response.data;
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+    };
+
+    const logout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+    };
+
+    const refreshUser = async () => {
+        try {
+            const response = await userApi.getMe();
+            setUser(response.data.user);
+        } catch (error) {
+            logout();
+        }
+    };
+
+    const hasPermission = (permission: string) => {
+        if (!user) return false;
+        if (user.role === 'SUPER_ADMIN') return true;
+        return user.permissions?.includes(permission) || false;
+    };
+
+    return (
+        <AuthContext.Provider
+            value={{
+                user,
+                isLoading,
+                isAuthenticated,
+                login,
+                register,
+                logout,
+                refreshUser,
+                hasPermission,
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
+}
+
+export function useAuth() {
+    const context = React.useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+}

@@ -1,0 +1,381 @@
+const express = require('express');
+const { z } = require('zod');
+const { PrismaClient } = require('@prisma/client');
+const { authenticate, authorize } = require('../middleware/auth');
+const aiService = require('../services/ai.service');
+
+const router = express.Router();
+const prisma = new PrismaClient();
+
+// Validation schemas
+const createInterviewSchema = z.object({
+    domain: z.string().min(2, 'Domain is required'),
+    company: z.string().optional(),
+    role: z.string().min(2, 'Role is required'),
+    jobDescription: z.string().optional(),
+    difficulty: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).default('INTERMEDIATE'),
+    panelCount: z.number().min(1).max(5).default(1),
+    scheduledAt: z.string().optional().nullable(),
+    duration: z.number().default(30),
+    selectedAvatars: z.array(z.string()).optional(),
+    technology: z.string().optional() // Added
+});
+
+/**
+ * @route   GET /api/interviews
+ * @desc    Get user's interviews
+ * @access  Private
+ */
+router.get('/', authenticate, async (req, res, next) => {
+    try {
+        const { status, page = 1, limit = 10 } = req.query;
+
+        const where = { userId: req.user.id };
+        if (status) where.status = status;
+
+        const [interviews, total] = await Promise.all([
+            prisma.interview.findMany({
+                where,
+                select: {
+                    id: true,
+                    domain: true,
+                    company: true,
+                    role: true,
+                    difficulty: true,
+                    panelCount: true,
+                    status: true,
+                    scheduledAt: true,
+                    completedAt: true,
+                    createdAt: true,
+                    evaluation: {
+                        select: {
+                            overallScore: true
+                        }
+                    }
+                },
+                skip: (Number(page) - 1) * Number(limit),
+                take: Number(limit),
+                orderBy: { createdAt: 'desc' }
+            }),
+            prisma.interview.count({ where })
+        ]);
+
+        res.json({
+            interviews,
+            pagination: {
+                page: Number(page),
+                limit: Number(limit),
+                total,
+                pages: Math.ceil(total / Number(limit))
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @route   GET /api/interviews/:id
+ * @desc    Get interview details
+ * @access  Private
+ */
+router.get('/:id', authenticate, async (req, res, next) => {
+    try {
+        const interview = await prisma.interview.findFirst({
+            where: {
+                id: req.params.id,
+                userId: req.user.id
+            },
+            include: {
+                questions: {
+                    orderBy: { order: 'asc' },
+                    include: {
+                        response: true
+                    }
+                },
+                evaluation: true
+            }
+        });
+
+        if (!interview) {
+            return res.status(404).json({ error: 'Interview not found' });
+        }
+
+        res.json({ interview });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @route   GET /api/interviews/:id/report
+ * @desc    Get or generate interview report
+ * @access  Private
+ */
+router.get('/:id/report', authenticate, async (req, res, next) => {
+    try {
+        // Check interview belongs to user
+        const interview = await prisma.interview.findFirst({
+            where: {
+                id: req.params.id,
+                userId: req.user.id
+            },
+            include: {
+                evaluation: true
+            }
+        });
+
+        if (!interview) {
+            return res.status(404).json({ error: 'Interview not found' });
+        }
+
+        // Generate or retrieve report
+        const aiService = require('../services/ai.service');
+        const report = await aiService.generateDetailedReport(req.params.id);
+
+        res.json({ report });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @route   POST /api/interviews
+ * @desc    Create a new interview
+ * @access  Private
+ */
+router.post('/', authenticate, async (req, res, next) => {
+    try {
+        const validatedData = createInterviewSchema.parse(req.body);
+
+        const interview = await prisma.interview.create({
+            data: {
+                ...validatedData,
+                userId: req.user.id,
+                status: 'SCHEDULED'
+            }
+        });
+
+        res.status(201).json({ message: 'Interview scheduled', interview });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @route   PATCH /api/interviews/:id/start
+ * @desc    Start an interview
+ * @access  Private
+ */
+router.patch('/:id/start', authenticate, async (req, res, next) => {
+    try {
+        const interview = await prisma.interview.findFirst({
+            where: {
+                id: req.params.id,
+                userId: req.user.id
+            }
+        });
+
+        if (!interview) {
+            return res.status(404).json({ error: 'Interview not found' });
+        }
+
+        if (interview.status !== 'SCHEDULED') {
+            return res.status(400).json({ error: 'Interview cannot be started' });
+        }
+
+        const updated = await prisma.interview.update({
+            where: { id: req.params.id },
+            data: {
+                status: 'IN_PROGRESS',
+                startedAt: new Date()
+            }
+        });
+
+        res.json({ message: 'Interview started', interview: updated });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @route   PATCH /api/interviews/:id/complete
+ * @desc    Complete an interview
+ * @access  Private
+ */
+router.patch('/:id/complete', authenticate, async (req, res, next) => {
+    try {
+        const interview = await prisma.interview.findFirst({
+            where: {
+                id: req.params.id,
+                userId: req.user.id
+            }
+        });
+
+        if (!interview) {
+            return res.status(404).json({ error: 'Interview not found' });
+        }
+
+        if (interview.status !== 'IN_PROGRESS') {
+            return res.status(400).json({ error: 'Interview is not in progress' });
+        }
+
+        const updated = await prisma.interview.update({
+            where: { id: req.params.id },
+            data: {
+                status: 'COMPLETED',
+                completedAt: new Date()
+            }
+        });
+
+        res.json({ message: 'Interview completed', interview: updated });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @route   GET /api/interviews/stats/summary
+ * @desc    Get interview statistics for user
+ * @access  Private
+ */
+router.get('/stats/summary', authenticate, async (req, res, next) => {
+    try {
+        const [total, completed, avgScore] = await Promise.all([
+            prisma.interview.count({ where: { userId: req.user.id } }),
+            prisma.interview.count({ where: { userId: req.user.id, status: 'COMPLETED' } }),
+            prisma.interviewEvaluation.aggregate({
+                where: { interview: { userId: req.user.id } },
+                _avg: { overallScore: true }
+            })
+        ]);
+
+        res.json({
+            stats: {
+                total,
+                completed,
+                averageScore: avgScore._avg.overallScore || 0
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @route   GET /api/interviews/job-interviews
+     * @desc    Get HR scheduled interviews (ATS) for the user
+     * @access  Private
+     */
+router.get('/job-interviews', authenticate, async (req, res, next) => {
+    try {
+        const interviews = await prisma.jobInterview.findMany({
+            where: {
+                application: {
+                    applicantId: req.user.id
+                },
+                status: 'SCHEDULED' // Only future/scheduled ones
+            },
+            include: {
+                application: {
+                    include: {
+                        job: {
+                            include: {
+                                employer: {
+                                    include: { employerProfile: true }
+                                }
+                            }
+                        }
+                    }
+                },
+                interviewer: {
+                    select: { name: true, email: true } // HR/Interviewer details
+                }
+            },
+            orderBy: { scheduledAt: 'asc' }
+        });
+        res.json({ interviews });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// ============= AI INTEGRATION =============
+
+/**
+ * @route   POST /api/interviews/:id/next-question
+ * @desc    Generate next question based on context
+ * @access  Private
+ */
+router.post('/:id/next-question', authenticate, async (req, res, next) => {
+    try {
+        const interview = await prisma.interview.findFirst({
+            where: { id: req.params.id, userId: req.user.id }
+        });
+
+        if (!interview) return res.status(404).json({ error: 'Interview not found' });
+
+        const aiResponse = await aiService.generateNextQuestion(interview.id);
+
+        // Store question in DB
+        const question = await prisma.interviewQuestion.create({
+            data: {
+                interviewId: interview.id,
+                question: aiResponse.question,
+                type: aiResponse.type,
+                avatarId: aiResponse.avatarId,
+                order: (await prisma.interviewQuestion.count({ where: { interviewId: interview.id } })) + 1
+            }
+        });
+
+        res.json({ question });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @route   POST /api/interviews/:id/response
+ * @desc    Submit response and get evaluation
+ * @access  Private
+ */
+router.post('/:id/response', authenticate, async (req, res, next) => {
+    try {
+        const { questionId, answer } = req.body;
+
+        // Save response
+        const response = await prisma.interviewResponse.create({
+            data: {
+                interviewId: req.params.id,
+                questionId,
+                transcript: answer
+            }
+        });
+
+        // Evaluate
+        const evaluation = await aiService.evaluateResponse(questionId, answer);
+
+        res.json({
+            response,
+            evaluation
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @route   POST /api/interviews/train
+ * @desc    Admin: Add knowledge to AI
+ * @access  Private (Admin)
+ */
+router.post('/train', authenticate, authorize(['ADMIN', 'SUPER_ADMIN']), async (req, res, next) => {
+    try {
+        const kb = await aiService.trainKnowledgeBase(req.body);
+        res.status(201).json({ message: 'Knowledge base updated', kb });
+    } catch (error) {
+        next(error);
+    }
+});
+
+module.exports = router;
