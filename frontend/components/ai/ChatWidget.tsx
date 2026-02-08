@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Bot, X, Send, Minimize2, User, Phone, Mail } from 'lucide-react'
+import { Bot, Send, Minimize2, User, Phone, Mail } from 'lucide-react'
 import api from '@/lib/api' // Ensure this axios instance handles auth headers automatically if present
 
 // Basic type for chat messages
@@ -69,7 +69,11 @@ export default function ChatWidget() {
 
         try {
             // Include leadDetails only if it's a guest session context
-            const payload: any = {
+            const payload: {
+                message: string
+                history: { role: string; parts: { text: string }[] }[]
+                leadDetails?: typeof leadForm
+            } = {
                 message: userMsg,
                 history: messages.map(m => ({
                     role: m.role,
@@ -140,8 +144,8 @@ export default function ChatWidget() {
                             >
                                 <div
                                     className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm shadow-sm whitespace-pre-wrap ${msg.role === 'user'
-                                            ? 'bg-purple-600 text-white rounded-br-none'
-                                            : 'bg-white text-slate-800 border rounded-bl-none'
+                                        ? 'bg-purple-600 text-white rounded-br-none'
+                                        : 'bg-white text-slate-800 border rounded-bl-none'
                                         }`}
                                 >
                                     {msg.text}
@@ -225,7 +229,7 @@ export default function ChatWidget() {
                             </div>
                         </div>
                         <p className="text-xs text-gray-400 text-center">
-                            We'll use this to contact you about your query.
+                            We&apos;ll use this to contact you about your query.
                         </p>
                         <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 mt-2">
                             Start Chatting

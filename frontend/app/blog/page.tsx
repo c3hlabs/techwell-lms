@@ -9,7 +9,19 @@ import { Input } from '@/components/ui/input'
 import api from '@/lib/api'
 
 export default function BlogPage() {
-    const [posts, setPosts] = React.useState<any[]>([])
+    interface BlogPost {
+        id: string
+        title: string
+        slug: string
+        summary?: string
+        content: string
+        coverImage?: string
+        publishedAt?: string
+        createdAt: string
+        author?: { name: string }
+        tags?: string[]
+    }
+    const [posts, setPosts] = React.useState<BlogPost[]>([])
     const [isLoading, setIsLoading] = React.useState(true)
     const [searchQuery, setSearchQuery] = React.useState('')
     const [debouncedSearch, setDebouncedSearch] = React.useState('')

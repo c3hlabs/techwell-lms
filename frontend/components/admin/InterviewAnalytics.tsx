@@ -1,13 +1,24 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts"
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import api from "@/lib/api"
 import { Loader2 } from "lucide-react"
 
+interface AnalyticsData {
+    radar: {
+        tech: number
+        comm: number
+        conf: number
+    }
+    trend: { date: string; score: number }[]
+    weaknesses: { tag: string; count: number }[]
+    totalInterviews: number
+}
+
 export function InterviewAnalytics() {
-    const [data, setData] = React.useState<any>(null)
+    const [data, setData] = React.useState<AnalyticsData | null>(null)
     const [loading, setLoading] = React.useState(true)
 
     React.useEffect(() => {
@@ -86,7 +97,7 @@ export function InterviewAnalytics() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {data.weaknesses.map((w: any, i: number) => (
+                            {data.weaknesses.map((w: { tag: string; count: number }, i: number) => (
                                 <div key={i} className="flex items-center">
                                     <div className="w-full">
                                         <div className="flex items-center justify-between mb-1">

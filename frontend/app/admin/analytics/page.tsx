@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { CalendarDateRangePicker } from '@/components/ui/date-range-picker'
+
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
@@ -18,8 +18,21 @@ import { format, subDays } from 'date-fns'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
+interface AnalyticsData {
+    summary: {
+        totalLeads: number
+        totalRevenue: number
+    }
+    charts: {
+        status: { status: string; _count: number }[]
+        source: { source: string; _count: number }[]
+        college: { college: string; _count: number }[]
+        location: { location: string; _count: number }[]
+    }
+}
+
 export default function AnalyticsPage() {
-    const [data, setData] = React.useState<any>(null)
+    const [data, setData] = React.useState<AnalyticsData | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
     const [dateRange, setDateRange] = React.useState({
         from: subDays(new Date(), 30),
@@ -89,22 +102,22 @@ export default function AnalyticsPage() {
     }
 
     // Transform Data for Recharts
-    const statusData = data?.charts?.status?.map((item: any) => ({
+    const statusData = data?.charts?.status?.map((item) => ({
         name: item.status,
         value: item._count
     })) || []
 
-    const sourceData = data?.charts?.source?.map((item: any) => ({
+    const sourceData = data?.charts?.source?.map((item) => ({
         name: item.source,
         value: item._count
     })) || []
 
-    const collegeData = data?.charts?.college?.map((item: any) => ({
+    const collegeData = data?.charts?.college?.map((item) => ({
         name: item.college,
         value: item._count
     })) || []
 
-    const locationData = data?.charts?.location?.map((item: any) => ({
+    const locationData = data?.charts?.location?.map((item) => ({
         name: item.location,
         value: item._count
     })) || []
@@ -156,7 +169,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {((statusData.find((s: any) => s.name === 'CONVERTED')?.value || 0) / (data?.summary?.totalLeads || 1) * 100).toFixed(1)}%
+                            {((statusData.find((s) => s.name === 'CONVERTED')?.value || 0) / (data?.summary?.totalLeads || 1) * 100).toFixed(1)}%
                         </div>
                         <p className="text-xs text-muted-foreground">+2.4% from last month</p>
                     </CardContent>
@@ -193,7 +206,7 @@ export default function AnalyticsPage() {
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    {sourceData.map((entry: any, index: number) => (
+                                    {sourceData.map((entry, index: number) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>

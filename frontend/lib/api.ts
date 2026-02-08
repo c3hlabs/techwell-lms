@@ -62,7 +62,7 @@ export const userApi = {
 
 export const employerApi = {
     getProfile: () => api.get('/employers/profile'),
-    updateProfile: (data: any) => api.put('/employers/profile', data),
+    updateProfile: (data: unknown) => api.put('/employers/profile', data),
 };
 
 export const uploadApi = {
@@ -85,7 +85,7 @@ export const courseApi = {
     enroll: (courseId: string) => api.post(`/courses/${courseId}/enroll`),
     getMyEnrollments: () => api.get('/courses/my/enrolled'),
     generate: (data: { topic: string; difficulty: string }) => api.post('/courses/generate', data),
-    updateCurriculum: (id: string, data: { modules: any[] }) => api.put(`/courses/${id}/curriculum`, data),
+    updateCurriculum: (id: string, data: { modules: unknown[] }) => api.put(`/courses/${id}/curriculum`, data),
 };
 
 // Interview API
@@ -114,13 +114,13 @@ export const interviewApi = {
     nextQuestion: (id: string) => api.post(`/interviews/${id}/next-question`),
     submitResponse: (id: string, data: { questionId: string; answer: string }) =>
         api.post(`/interviews/${id}/response`, data),
-    trainAI: (data: any) => api.post('/interviews/train', data),
+    trainAI: (data: unknown) => api.post('/interviews/train', data),
 };
 
 // Payment API
 export const paymentApi = {
     createOrder: (courseId: string, type: 'COURSE_ONLY' | 'BUNDLE' | 'INTERVIEW_ONLY' = 'COURSE_ONLY') => api.post('/payments/order', { courseId, type }),
-    verifyPayment: (data: any) => api.post('/payments/verify', data),
+    verifyPayment: (data: unknown) => api.post('/payments/verify', data),
 };
 
 // Certificate API

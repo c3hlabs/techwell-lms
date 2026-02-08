@@ -16,7 +16,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-const StatCard = ({ icon: Icon, label, value, trend, color }: any) => (
+interface StatCardProps {
+    icon: React.ElementType
+    label: string
+    value: string
+    trend: string
+    color: string
+}
+
+const StatCard = ({ icon: Icon, label, value, trend, color }: StatCardProps) => (
     <Card className="border-none shadow-sm bg-white overflow-hidden group hover:shadow-md transition-all duration-300">
         <CardContent className="p-6">
             <div className="flex items-center justify-between">

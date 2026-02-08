@@ -38,7 +38,8 @@ export default function LeadIntegrationsPage() {
         accessToken: '',
         pageId: '',
         accountId: '',
-        webhookSecret: ''
+        webhookSecret: '',
+        name: ''
     })
 
     React.useEffect(() => {
@@ -49,8 +50,8 @@ export default function LeadIntegrationsPage() {
         try {
             const res = await api.get('/leads/integrations')
             setIntegrations(res.data)
-        } catch (error) {
-            console.error("Failed to load integrations", error)
+        } catch {
+            // Error handling
         } finally {
             setIsLoading(false)
         }
@@ -61,8 +62,8 @@ export default function LeadIntegrationsPage() {
             await api.post('/leads/integrations', configData)
             fetchIntegrations()
             setShowConfig(null)
-            setConfigData({ platform: '', accessToken: '', pageId: '', accountId: '', webhookSecret: '' })
-        } catch (error) {
+            setConfigData({ platform: '', accessToken: '', pageId: '', accountId: '', webhookSecret: '', name: '' })
+        } catch {
             alert('Failed to connect integration')
         }
     }

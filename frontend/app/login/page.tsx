@@ -34,8 +34,9 @@ export default function LoginPage() {
         try {
             await login(email, password)
             router.push('/dashboard')
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Login failed. Please try again.')
+        } catch (err: unknown) {
+            const errorMessage = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Login failed. Please try again.'
+            setError(errorMessage)
         } finally {
             setIsLoading(false)
         }
@@ -116,7 +117,7 @@ export default function LoginPage() {
                         </form>
 
                         <div className="mt-6 text-center text-sm">
-                            <span className="text-muted-foreground">Don't have an account? </span>
+                            <span className="text-muted-foreground">Don&apos;t have an account? </span>
                             <Link href="/register" className="text-primary hover:underline font-medium">
                                 Sign up
                             </Link>

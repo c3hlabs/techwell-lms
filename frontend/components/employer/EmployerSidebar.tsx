@@ -8,11 +8,9 @@ import {
     Briefcase,
     Video,
     BarChart3,
-    Settings,
     LogOut,
     PlusCircle,
-    Building2,
-    Users
+    Building2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -29,7 +27,7 @@ const sidebarItems = [
         icon: Briefcase,
     },
     {
-        title: "Inteviews",
+        title: "Interviews",
         href: "/employer/interviews",
         icon: Video,
     },

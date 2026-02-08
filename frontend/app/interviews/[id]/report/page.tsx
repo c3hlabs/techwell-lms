@@ -117,7 +117,7 @@ export default function InterviewReportPage() {
     const { isAuthenticated, isLoading: authLoading } = useAuth()
 
     const [isLoading, setIsLoading] = useState(true)
-    const [interview, setInterview] = useState<any>(null)
+    const [interview, setInterview] = useState<{ role?: string; domain?: string } | null>(null)
     const [evaluation, setEvaluation] = useState<Evaluation | null>(null)
     const [questions, setQuestions] = useState<QuestionResult[]>([])
 
@@ -215,7 +215,7 @@ export default function InterviewReportPage() {
                 <div className="text-center">
                     <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h2 className="text-xl font-medium mb-2">Report Not Available</h2>
-                    <p className="text-muted-foreground mb-4">This interview hasn't been evaluated yet.</p>
+                    <p className="text-muted-foreground mb-4">This interview hasn&apos;t been evaluated yet.</p>
                     <Button onClick={() => router.push('/interviews')}>Back to Interviews</Button>
                 </div>
             </div>
@@ -365,7 +365,7 @@ export default function InterviewReportPage() {
                                     </div>
                                 </div>
                                 <div className="pl-4 border-l-2 border-muted">
-                                    <p className="text-sm text-muted-foreground italic mb-2">Your answer: "{q.answer}"</p>
+                                    <p className="text-sm text-muted-foreground italic mb-2">Your answer: &quot;{q.answer}&quot;</p>
                                     <p className="text-sm"><span className="font-medium">Feedback:</span> {q.feedback}</p>
                                 </div>
                             </div>
@@ -380,7 +380,7 @@ export default function InterviewReportPage() {
                             <Lightbulb className="h-5 w-5 text-yellow-500" />
                             Personalized Recommendations
                         </CardTitle>
-                        <CardDescription>Based on your performance, here's what to focus on next</CardDescription>
+                        <CardDescription>Based on your performance, here&apos;s what to focus on next</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -72,8 +72,9 @@ export default function PublicPortfolioPage() {
         try {
             const res = await api.get(`/portfolio/${username}`)
             setPortfolio(res.data)
-        } catch (err: any) {
-            setError(err.response?.status === 404 ? 'Portfolio not found' : 'Failed to load portfolio')
+        } catch (err: unknown) {
+            const error = err as { response?: { status?: number } }
+            setError(error.response?.status === 404 ? 'Portfolio not found' : 'Failed to load portfolio')
             // Mock data for demo
             setPortfolio({
                 user: {
@@ -140,7 +141,7 @@ export default function PublicPortfolioPage() {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center">
                 <h1 className="text-2xl font-bold mb-2">Portfolio Not Found</h1>
-                <p className="text-muted-foreground">This portfolio doesn't exist or is private.</p>
+                <p className="text-muted-foreground">This portfolio doesn&apos;t exist or is private.</p>
             </div>
         )
     }
@@ -280,8 +281,8 @@ export default function PublicPortfolioPage() {
                                     <div key={interview.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                                         <div className="flex items-center gap-4">
                                             <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${interview.score >= 90 ? 'bg-green-100 text-green-600' :
-                                                    interview.score >= 70 ? 'bg-yellow-100 text-yellow-600' :
-                                                        'bg-orange-100 text-orange-600'
+                                                interview.score >= 70 ? 'bg-yellow-100 text-yellow-600' :
+                                                    'bg-orange-100 text-orange-600'
                                                 }`}>
                                                 <span className="font-bold">{interview.score}%</span>
                                             </div>

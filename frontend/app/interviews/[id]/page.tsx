@@ -24,6 +24,41 @@ import {
     Briefcase
 } from 'lucide-react'
 
+// Speech Recognition Types
+interface ISpeechRecognitionEvent extends Event {
+    resultIndex: number
+    results: {
+        [key: number]: {
+            [key: number]: {
+                transcript: string
+            }
+            length: number
+        }
+        length: number
+    }
+}
+
+interface ISpeechRecognitionErrorEvent extends Event {
+    error: string
+}
+
+interface ISpeechRecognition extends EventTarget {
+    continuous: boolean
+    interimResults: boolean
+    onresult: (event: ISpeechRecognitionEvent) => void
+    onerror: (event: ISpeechRecognitionErrorEvent) => void
+    onend: () => void
+    start: () => void
+    stop: () => void
+}
+
+declare global {
+    interface Window {
+        SpeechRecognition: new () => ISpeechRecognition
+        webkitSpeechRecognition: new () => ISpeechRecognition
+    }
+}
+
 interface Message {
     id: string
     role: 'interviewer' | 'user'
@@ -38,7 +73,14 @@ interface Question {
     avatarRole: string // 'Technical', 'HR', etc.
 }
 
-const AVATARS: Record<string, any> = {
+interface AvatarConfig {
+    name: string
+    role: string
+    color: string
+    icon: React.ElementType
+}
+
+const AVATARS: Record<string, AvatarConfig> = {
     'tech-1': { name: "Alex Chen", role: "Technical Lead", color: "from-blue-500/20 to-cyan-500/20", icon: Bot },
     'tech-2': { name: "Sarah Johnson", role: "Senior Engineer", color: "from-indigo-500/20 to-blue-500/20", icon: Bot },
     'hr-1': { name: "Emma Williams", role: "HR Manager", color: "from-purple-500/20 to-pink-500/20", icon: Briefcase },
@@ -67,7 +109,18 @@ export default function InterviewRoomPage() {
     const [isThinking, setIsThinking] = React.useState(false)
     const [isAIProcessing, setIsAIProcessing] = React.useState(false)
 
-    const [interview, setInterview] = React.useState<any>(null)
+    interface Interview {
+        id: string
+        role: string
+        company?: string
+        technology?: string
+        difficulty?: string
+        duration?: number
+        panelCount?: number
+        selectedAvatars?: string[]
+    }
+
+    const [interview, setInterview] = React.useState<Interview | null>(null)
     const [timeLeft, setTimeLeft] = React.useState(0) // Seconds
     const [isCompleted, setIsCompleted] = React.useState(false)
 
@@ -229,32 +282,34 @@ export default function InterviewRoomPage() {
     const [isWaitingNext, setIsWaitingNext] = React.useState(false)
     const [nextQuestionTimer, setNextQuestionTimer] = React.useState(10)
     const [isRecording, setIsRecording] = React.useState(false)
-    const recognitionRef = React.useRef<any>(null)
+    const recognitionRef = React.useRef<ISpeechRecognition | null>(null)
     const speechTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
     // Handle Speech Recognition
     React.useEffect(() => {
-        if (typeof window !== 'undefined' && (window as any).webkitSpeechRecognition) {
-            const SpeechRecognition = (window as any).webkitSpeechRecognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+        if (SpeechRecognition) {
             recognitionRef.current = new SpeechRecognition()
-            recognitionRef.current.continuous = true
-            recognitionRef.current.interimResults = true
+            if (recognitionRef.current) {
+                recognitionRef.current.continuous = true
+                recognitionRef.current.interimResults = true
 
-            recognitionRef.current.onresult = (event: any) => {
-                let transcript = ''
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript
+                recognitionRef.current.onresult = (event: ISpeechRecognitionEvent) => {
+                    let transcript = ''
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript
+                    }
+                    setUserResponse(transcript)
                 }
-                setUserResponse(prev => transcript)
-            }
 
-            recognitionRef.current.onerror = (event: any) => {
-                console.error('Speech recognition error:', event.error)
-                setIsRecording(false)
-            }
+                recognitionRef.current.onerror = (event: ISpeechRecognitionErrorEvent) => {
+                    console.error('Speech recognition error:', event.error)
+                    setIsRecording(false)
+                }
 
-            recognitionRef.current.onend = () => {
-                setIsRecording(false)
+                recognitionRef.current.onend = () => {
+                    setIsRecording(false)
+                }
             }
         }
     }, [])

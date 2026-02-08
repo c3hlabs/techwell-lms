@@ -7,7 +7,7 @@ import api from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Briefcase, Search, Filter, MoreHorizontal, Eye, Edit, Trash2, ExternalLink } from "lucide-react"
+import { Plus, Briefcase, Search, Filter, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,8 +19,20 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+interface Job {
+    id: string
+    title: string
+    location: string
+    type: string
+    status: string
+    createdAt: string
+    _count?: {
+        applications: number
+    }
+}
+
 export default function EmployerJobsPage() {
-    const [jobs, setJobs] = useState<any[]>([])
+    const [jobs, setJobs] = useState<Job[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const router = useRouter()
@@ -33,8 +45,8 @@ export default function EmployerJobsPage() {
         try {
             const res = await api.get('/jobs/my/listings')
             setJobs(res.data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         } finally {
             setIsLoading(false)
         }

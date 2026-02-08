@@ -14,8 +14,31 @@ import { Loader2, ArrowLeft, Mail, Phone, Calendar, Shield, Activity, FileText }
 export default function User360Page() {
     const { id } = useParams()
     const router = useRouter()
-    const [user, setUser] = useState<any>(null)
-    const [auditLogs, setAuditLogs] = useState<any[]>([])
+
+
+    interface UserProfile {
+        id: string
+        name: string
+        email: string
+        role: string
+        avatar?: string
+        createdAt: string
+        isActive: boolean
+    }
+    interface AuditLog {
+        id: string
+        action: string
+        entityType: string
+        timestamp: string
+        method: string
+        path: string
+        ipAddress?: string
+        userAgent?: string
+        details?: unknown
+    }
+
+    const [user, setUser] = useState<UserProfile | null>(null)
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -43,7 +66,7 @@ export default function User360Page() {
 
             setAuditLogs(activityRes.data)
 
-            const foundUser = usersRes.data.users.find((u: any) => u.id === id)
+            const foundUser = usersRes.data.users.find((u: UserProfile) => u.id === id)
             setUser(foundUser)
 
         } catch (error) {
@@ -108,8 +131,8 @@ export default function User360Page() {
                                     {auditLogs.map((log) => (
                                         <div key={log.id} className="relative">
                                             <div className={`absolute -left-[31px] top-1 h-3 w-3 rounded-full border-2 border-white ${log.action === 'LOGIN' ? 'bg-green-500' :
-                                                    log.action === 'DELETE' ? 'bg-red-500' :
-                                                        'bg-blue-500'
+                                                log.action === 'DELETE' ? 'bg-red-500' :
+                                                    'bg-blue-500'
                                                 }`} />
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-2">
@@ -127,9 +150,9 @@ export default function User360Page() {
                                                         IP: {log.ipAddress} | UA: {log.userAgent?.substring(0, 50)}...
                                                     </div>
                                                 )}
-                                                {log.details && (
+                                                {Boolean(log.details) && (
                                                     <pre className="text-[10px] bg-slate-900 text-slate-50 p-2 rounded mt-2 overflow-x-auto">
-                                                        {JSON.stringify(log.details, null, 2)}
+                                                        {JSON.stringify(log.details as Record<string, unknown>, null, 2)}
                                                     </pre>
                                                 )}
                                             </div>

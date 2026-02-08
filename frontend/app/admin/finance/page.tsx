@@ -14,7 +14,14 @@ import { format } from 'date-fns'
 
 export default function FinancePage() {
     const [stats, setStats] = React.useState({ totalIncome: 0, totalExpenses: 0, profit: 0 })
-    const [expenses, setExpenses] = React.useState<any[]>([])
+    interface Expense {
+        id: string
+        title: string
+        amount: number
+        category: string
+        date: string
+    }
+    const [expenses, setExpenses] = React.useState<Expense[]>([])
     const [isAddOpen, setIsAddOpen] = React.useState(false)
     const [newExpense, setNewExpense] = React.useState({
         title: '',
@@ -23,11 +30,7 @@ export default function FinancePage() {
         date: format(new Date(), 'yyyy-MM-dd')
     })
 
-    React.useEffect(() => {
-        fetchData()
-    }, [])
-
-    const fetchData = async () => {
+    const fetchData = React.useCallback(async () => {
         try {
             const [statsRes, expensesRes] = await Promise.all([
                 api.get('/finance/stats'),
@@ -35,10 +38,14 @@ export default function FinancePage() {
             ])
             setStats(statsRes.data)
             setExpenses(expensesRes.data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         }
-    }
+    }, [])
+
+    React.useEffect(() => {
+        fetchData()
+    }, [fetchData])
 
     const handleAddExpense = async () => {
         try {
@@ -46,7 +53,7 @@ export default function FinancePage() {
             toast.success("Expense added")
             setIsAddOpen(false)
             fetchData()
-        } catch (error) {
+        } catch {
             toast.error("Failed to add expense")
         }
     }

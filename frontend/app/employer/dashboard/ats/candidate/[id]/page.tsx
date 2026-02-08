@@ -8,15 +8,36 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Mail, Phone, Calendar, Star, Download, Send, CheckCircle, XCircle } from "lucide-react"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Loader2, Mail, Phone, Calendar, Download, Send } from "lucide-react"
+
 
 export default function CandidateProfilePage() {
     const { id } = useParams()
     const router = useRouter()
-    const [application, setApplication] = useState<any>(null)
+    interface ApplicationDetail {
+        id: string
+        status: string
+        source: string
+        atsScore: number
+        externalName?: string
+        externalEmail?: string
+        externalPhone?: string
+        coverLetter?: string
+        resumeUrl?: string
+        applicant?: {
+            name: string
+            email: string
+            phone?: string
+            avatar?: string
+        }
+        statusHistory?: {
+            status: string
+            timestamp: string
+            notes?: string
+        }[]
+    }
+
+    const [application, setApplication] = useState<ApplicationDetail | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [score, setScore] = useState<number | null>(null)
 
@@ -34,7 +55,7 @@ export default function CandidateProfilePage() {
             if (res.data.status === 'APPLIED') {
                 await api.patch(`/ats/status/${id}`, { status: 'VIEWED' })
                 // Update local state without re-fetching entire object to avoid loop/flash
-                setApplication((prev: any) => ({ ...prev, status: 'VIEWED' }))
+                setApplication((prev) => prev ? ({ ...prev, status: 'VIEWED' }) : null)
             }
         } catch (error) {
             console.error(error)
@@ -52,7 +73,7 @@ export default function CandidateProfilePage() {
     const handleStatusUpdate = async (newStatus: string) => {
         await api.patch(`/ats/status/${id}`, { status: newStatus })
         // Optimistic or re-fetch
-        setApplication((prev: any) => ({ ...prev, status: newStatus }))
+        setApplication((prev) => prev ? ({ ...prev, status: newStatus }) : null)
         // fetchData() // Optional: re-fetch to get history update
     }
 
@@ -60,7 +81,7 @@ export default function CandidateProfilePage() {
     if (!application) return <div>Candidate not found</div>
 
     const { applicant, externalName, externalEmail, externalPhone, source, status, coverLetter, resumeUrl } = application
-    const name = applicant?.name || externalName
+    const name = applicant?.name || externalName || 'Unknown Candidate'
     const email = applicant?.email || externalEmail
     const phone = applicant?.phone || externalPhone || "N/A"
 
@@ -171,11 +192,11 @@ export default function CandidateProfilePage() {
                             <Card>
                                 <CardContent className="pt-6">
                                     <div className="space-y-4">
-                                        {(application.statusHistory || []).map((entry: any, i: number) => (
+                                        {(application?.statusHistory || []).map((entry: { status: string; timestamp: string; notes?: string }, i: number) => (
                                             <div key={i} className="flex gap-4">
                                                 <div className="flex flex-col items-center">
                                                     <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-                                                    {i < (application.statusHistory.length - 1) && <div className="w-0.5 h-full bg-border -mb-2" />}
+                                                    {i < ((application.statusHistory?.length || 0) - 1) && <div className="w-0.5 h-full bg-border -mb-2" />}
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-sm">{entry.status}</p>

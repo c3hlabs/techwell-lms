@@ -8,7 +8,17 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2, Video, Calendar, Clock, ExternalLink } from 'lucide-react'
 
 export default function StudentLiveClassesPage() {
-    const [classes, setClasses] = useState<any[]>([])
+    interface LiveClass {
+        id: string
+        platform: string
+        status?: string
+        title: string
+        course?: { title: string }
+        scheduledAt: string
+        duration: number
+        meetingLink?: string
+    }
+    const [classes, setClasses] = useState<LiveClass[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -69,7 +79,7 @@ export default function StudentLiveClassesPage() {
                     <div className="col-span-full text-center py-12 border rounded-lg bg-muted/20">
                         <Video className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                         <h3 className="text-lg font-medium">No Classes Scheduled</h3>
-                        <p className="text-muted-foreground">You don't have any upcoming live classes for your courses.</p>
+                        <p className="text-muted-foreground">You don&apos;t have any upcoming live classes for your courses.</p>
                     </div>
                 )}
             </div>

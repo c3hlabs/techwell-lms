@@ -11,12 +11,24 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2 } from "lucide-react"
 
+interface Job {
+    title: string
+    type: string
+    location: string
+    salary: string
+    experience: string
+    description: string
+    requirements: string
+    skills: string
+    status: string
+}
+
 export default function EditJobPage() {
     const { id } = useParams()
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
-    const [job, setJob] = useState<any>({
+    const [job, setJob] = useState<Job>({
         title: '',
         type: 'FULL_TIME',
         location: '',
@@ -29,37 +41,29 @@ export default function EditJobPage() {
     })
 
     useEffect(() => {
-        fetchJob()
-    }, [id])
-
-    const fetchJob = async () => {
-        try {
-            const res = await api.get(`/jobs/${id}`)
-            setJob(res.data)
-        } catch (error) {
-            console.error(error)
-            alert("Failed to load job details")
-        } finally {
-            setIsLoading(false)
+        const fetchJob = async () => {
+            try {
+                const res = await api.get(`/jobs/${id}`)
+                setJob(res.data)
+            } catch {
+                alert("Failed to load job details")
+            } finally {
+                setIsLoading(false)
+            }
         }
-    }
+        if (id) {
+            void fetchJob()
+        }
+    }, [id])
 
     const handleSave = async () => {
         setIsSaving(true)
         try {
-            // Need to create PUT/PATCH endpoint for jobs if not exists
-            // Assuming PATCH /api/jobs/:id works. If not, I'll need to create/verify it.
-            // Standard CRUD usually implies it. 
-            // I'll assume it exists or I'll implement it.
-            // Checking: Existing jobs.routes.js usually has update. 
-            // If not, I'll fix in next step.
             await api.patch(`/jobs/${id}`, job)
-
             alert('Job Updated Successfully!')
             router.push('/employer/dashboard')
-        } catch (error: any) {
-            console.error(error)
-            // alert(error.response?.data?.error || "Failed to update job")
+        } catch {
+            // Error handling
         } finally {
             setIsSaving(false)
         }

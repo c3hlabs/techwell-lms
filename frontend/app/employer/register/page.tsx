@@ -63,11 +63,11 @@ export default function EmployerRegisterPage() {
             })
 
             router.push('/login?type=employer')
-        } catch (error: any) {
+        } catch {
             toast({
                 variant: "destructive",
                 title: "Registration Failed",
-                description: error.response?.data?.error || "Something went wrong.",
+                description: "Something went wrong.",
             })
         } finally {
             setIsLoading(false)
@@ -84,7 +84,7 @@ export default function EmployerRegisterPage() {
                 <div className="relative z-20 mt-auto">
                     <blockquote className="space-y-2">
                         <p className="text-lg">
-                            "Finding the right talent used to be a challenge. TechWell made it seamless to connect with skilled graduates."
+                            &quot;Finding the right talent used to be a challenge. TechWell made it seamless to connect with skilled graduates.&quot;
                         </p>
                         <footer className="text-sm">Sofia Davis, HR Director</footer>
                     </blockquote>

@@ -1,0 +1,111 @@
+﻿
+> frontend@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 19.7s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/76) ...
+  Generating static pages using 7 workers (19/76) 
+  Generating static pages using 7 workers (38/76) 
+  Generating static pages using 7 workers (57/76) 
+Γ£ô Generating static pages using 7 workers (76/76) in 1919.2ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /about
+Γö£ Γùï /admin
+Γö£ Γùï /admin/ai
+Γö£ Γùï /admin/ai-interviews
+Γö£ Γùï /admin/ai-interviews/avatars
+Γö£ Γùï /admin/ai-interviews/questions
+Γö£ Γùï /admin/ai/training
+Γö£ Γùï /admin/analytics
+Γö£ Γùï /admin/blogs
+Γö£ Γùï /admin/certificates
+Γö£ Γùï /admin/courses
+Γö£ Γùï /admin/courses/new
+Γö£ Γùï /admin/courses/review
+Γö£ Γùï /admin/email-settings
+Γö£ Γùï /admin/employers
+Γö£ Γùï /admin/finance
+Γö£ Γùï /admin/help-center
+Γö£ Γùï /admin/interviews
+Γö£ Γùï /admin/leads
+Γö£ Γùï /admin/leads/integrations
+Γö£ Γùï /admin/live-classes
+Γö£ Γùï /admin/pricing
+Γö£ Γùï /admin/reports
+Γö£ Γùï /admin/reviews
+Γö£ Γùï /admin/settings
+Γö£ Γùï /admin/staff/new
+Γö£ Γùï /admin/support
+Γö£ Γùï /admin/tasks
+Γö£ Γùï /admin/users
+Γö£ ╞Æ /admin/users/[id]
+Γö£ Γùï /admin/video-settings
+Γö£ Γùï /blog
+Γö£ Γùï /career-guide
+Γö£ Γùï /careers
+Γö£ ╞Æ /certificate/[id]
+Γö£ Γùï /colleges
+Γö£ Γùï /community/chat
+Γö£ Γùï /community/forum
+Γö£ Γùï /contact
+Γö£ Γùï /cookies
+Γö£ Γùï /courses
+Γö£ ╞Æ /courses/[id]
+Γö£ Γùï /dashboard
+Γö£ Γùï /dashboard/applications
+Γö£ Γùï /dashboard/instructor
+Γö£ Γùï /dashboard/support
+Γö£ Γùï /employer/dashboard
+Γö£ ╞Æ /employer/dashboard/ats/candidate/[id]
+Γö£ Γùï /employer/interviews
+Γö£ Γùï /employer/jobs
+Γö£ ╞Æ /employer/jobs/[id]
+Γö£ ╞Æ /employer/jobs/[id]/edit
+Γö£ ╞Æ /employer/jobs/edit/[id]
+Γö£ Γùï /employer/jobs/new
+Γö£ Γùï /employer/profile
+Γö£ Γùï /employer/register
+Γö£ Γùï /employer/reports
+Γö£ Γùï /employer/schedule-interview
+Γö£ Γùï /gdpr
+Γö£ Γùï /help
+Γö£ Γùï /instructor
+Γö£ Γùï /instructor/courses
+Γö£ Γùï /instructor/feedback
+Γö£ Γùï /instructor/settings
+Γö£ Γùï /instructor/students
+Γö£ Γùï /interviews
+Γö£ ╞Æ /interviews/[id]
+Γö£ ╞Æ /interviews/[id]/report
+Γö£ ╞Æ /interviews/[id]/start
+Γö£ Γùï /interviews/new
+Γö£ Γùï /jobs
+Γö£ ╞Æ /jobs/[id]
+Γö£ Γùï /live-classes
+Γö£ Γùï /login
+Γö£ ╞Æ /portfolio/[username]
+Γö£ Γùï /pricing
+Γö£ Γùï /privacy
+Γö£ Γùï /profile
+Γö£ Γùï /profile/portfolio
+Γö£ Γùï /register
+Γö£ Γùï /robots.txt
+Γö£ Γùï /sitemap.xml
+Γö£ Γùï /support
+Γö£ Γùï /terms
+Γöö ╞Æ /verify/[id]
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

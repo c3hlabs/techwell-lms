@@ -80,13 +80,13 @@ export default function AboutPage() {
                             <div className="space-y-4 text-muted-foreground">
                                 <p>
                                     Founded in 2023, TechWell emerged from a simple observation: traditional education
-                                    wasn't keeping pace with the rapidly evolving tech industry. Graduates struggled
+                                    wasn&apos;t keeping pace with the rapidly evolving tech industry. Graduates struggled
                                     to bridge the gap between academic knowledge and job-ready skills.
                                 </p>
                                 <p>
                                     Our founders, having experienced this gap firsthand, set out to create a platform
                                     that combines cutting-edge AI technology with practical, industry-relevant curriculum.
-                                    The result is a learning experience that adapts to each student's pace and prepares
+                                    The result is a learning experience that adapts to each student&apos;s pace and prepares
                                     them for real interviews at top tech companies.
                                 </p>
                                 <p>

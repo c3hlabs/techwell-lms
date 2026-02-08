@@ -19,6 +19,16 @@ import api from '@/lib/api'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
+interface Comment {
+    id: string
+    content: string
+    createdAt: string
+    user?: {
+        name: string
+        avatar?: string
+    }
+}
+
 interface Task {
     id: string
     title: string
@@ -28,13 +38,17 @@ interface Task {
     dueDate?: string
     assignedTo?: string
     assignee?: { id: string, name: string, avatar?: string }
-    comments?: any[]
+    comments?: Comment[]
     _count?: { comments: number }
 }
 
 export default function TaskManagerPage() {
     const [tasks, setTasks] = React.useState<Task[]>([])
-    const [users, setUsers] = React.useState<any[]>([])
+    interface TaskUser {
+        id: string
+        name: string
+    }
+    const [users, setUsers] = React.useState<TaskUser[]>([])
     const [isLoading, setIsLoading] = React.useState(true)
     const [isAddOpen, setIsAddOpen] = React.useState(false)
     const [selectedTask, setSelectedTask] = React.useState<Task | null>(null)
@@ -64,8 +78,8 @@ export default function TaskManagerPage() {
             ])
             setTasks(tasksRes.data || [])
             setUsers(usersRes.data.users || usersRes.data || [])
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         } finally {
             setIsLoading(false)
         }
@@ -78,7 +92,7 @@ export default function TaskManagerPage() {
             fetchData()
             setNewTask({ title: '', description: '', priority: 'MEDIUM', dueDate: '', status: 'PENDING', assignedTo: '' })
             toast.success('Task created')
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to add task')
         }
     }
@@ -90,9 +104,9 @@ export default function TaskManagerPage() {
                 currentStatus === 'IN_PROGRESS' ? 'COMPLETED' : 'PENDING'
 
         try {
-            setTasks(prev => prev.map(t => t.id === id ? { ...t, status: nextStatus as any } : t))
+            setTasks(prev => prev.map(t => t.id === id ? { ...t, status: nextStatus as Task['status'] } : t))
             await api.put(`/tasks/${id}`, { status: nextStatus })
-        } catch (error) {
+        } catch (_error) {
             fetchData()
         }
     }
@@ -105,7 +119,7 @@ export default function TaskManagerPage() {
             setTasks(prev => prev.filter(t => t.id !== id))
             if (selectedTask?.id === id) setDetailOpen(false)
             toast.success('Task deleted')
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to delete task')
         }
     }
@@ -124,7 +138,7 @@ export default function TaskManagerPage() {
             setSelectedTask(updatedTask)
             setTasks(prev => prev.map(t => t.id === selectedTask.id ? updatedTask : t))
             setCommentText('')
-        } catch (error) {
+        } catch {
             toast.error('Failed to post comment')
         }
     }
@@ -143,7 +157,7 @@ export default function TaskManagerPage() {
         setDetailOpen(true)
     }
 
-    const KanbanColumn = ({ status, title, icon: Icon }: { status: string, title: string, icon: any }) => {
+    const KanbanColumn = ({ status, title, icon: Icon }: { status: string, title: string, icon: React.ElementType }) => {
         const columnTasks = tasks.filter(t => t.status === status)
 
         return (
@@ -218,7 +232,7 @@ export default function TaskManagerPage() {
             <div className="flex items-center justify-between shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Task Manager</h1>
-                    <p className="text-muted-foreground">Organize your team's workflow and priorities.</p>
+                    <p className="text-muted-foreground">Organize your team&apos;s workflow and priorities.</p>
                 </div>
                 <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                     <DialogTrigger asChild>

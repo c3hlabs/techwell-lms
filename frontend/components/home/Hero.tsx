@@ -41,9 +41,22 @@ export function Hero() {
             setCurrentSlide((prev) => (prev + 1) % slides.length)
         }, 5000)
         return () => clearInterval(timer)
-    }, [])
+    }, [slides.length])
 
-    const boxes = [
+    interface HeroBox {
+        title: string
+        description: string
+        icon: React.ElementType
+        href: string
+        gradient: string
+        border: string
+        iconColor: string
+        cta: string
+        highlight?: boolean
+        external?: boolean
+    }
+
+    const boxes: HeroBox[] = [
         {
             title: "Smart Learning",
             description: "Adaptive AI courses Personalized for you.",
@@ -270,7 +283,7 @@ export function Hero() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                         {boxes.map((box, index) => {
                             const CardWrapper = ({ children }: { children: React.ReactNode }) =>
-                                (box as any).external ? (
+                                box.external ? (
                                     <a href={box.href} target="_blank" rel="noopener noreferrer" className="block h-full perspective-1000">
                                         {children}
                                     </a>

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from 'react'
-import { Star, Quote, Play, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -146,7 +146,7 @@ function TestimonialCard({ testimonial }: { testimonial: typeof testimonials[0] 
                     ))}
                 </div>
                 <Quote className="h-8 w-8 text-primary/20 mb-2" />
-                <p className="text-muted-foreground mb-6 italic">"{testimonial.quote}"</p>
+                <p className="text-muted-foreground mb-6 italic">&quot;{testimonial.quote}&quot;</p>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center font-semibold text-primary">

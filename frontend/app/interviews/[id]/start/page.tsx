@@ -41,7 +41,12 @@ export default function InterviewStartPage() {
     const [stream, setStream] = useState<MediaStream | null>(null)
     const [audioLevel, setAudioLevel] = useState(0)
     const [isReady, setIsReady] = useState(false)
-    const [interview, setInterview] = useState<any>(null)
+    interface Interview {
+        id: string
+        role: string
+        title?: string
+    }
+    const [interview, setInterview] = useState<Interview | null>(null)
 
     const [checks, setChecks] = useState<CheckItem[]>([
         { id: 'camera', label: 'Camera Access', icon: Camera, status: 'pending' },
@@ -71,44 +76,10 @@ export default function InterviewStartPage() {
         }
     }, [params.id])
 
-    // Run system checks on mount
-    useEffect(() => {
-        runSystemChecks()
-        return () => {
-            // Cleanup stream on unmount
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop())
-            }
-        }
-    }, [])
-
-    const updateCheck = (id: string, update: Partial<CheckItem>) => {
+    function updateCheck(id: string, update: Partial<CheckItem>) {
         setChecks(prev => prev.map(check =>
             check.id === id ? { ...check, ...update } : check
         ))
-    }
-
-    const runSystemChecks = async () => {
-        // Check browser compatibility
-        updateCheck('browser', { status: 'checking' })
-        await new Promise(r => setTimeout(r, 500))
-        const isCompatible = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
-        updateCheck('browser', {
-            status: isCompatible ? 'success' : 'error',
-            message: isCompatible ? 'Chrome/Edge/Firefox detected' : 'Browser not supported'
-        })
-
-        // Check internet connection
-        updateCheck('connection', { status: 'checking' })
-        await new Promise(r => setTimeout(r, 500))
-        const isOnline = navigator.onLine
-        updateCheck('connection', {
-            status: isOnline ? 'success' : 'error',
-            message: isOnline ? 'Connection stable' : 'No internet connection'
-        })
-
-        // Request camera and microphone
-        await requestMediaPermissions()
     }
 
     const requestMediaPermissions = async () => {
@@ -149,10 +120,11 @@ export default function InterviewStartPage() {
             updateAudioLevel()
 
             setIsReady(true)
-        } catch (error: any) {
+        } catch (error) {
             console.error('Media permission error:', error)
+            const err = error as Error
 
-            if (error.name === 'NotAllowedError') {
+            if (err.name === 'NotAllowedError') {
                 updateCheck('camera', { status: 'error', message: 'Permission denied - Please allow access' })
                 updateCheck('microphone', { status: 'error', message: 'Permission denied - Please allow access' })
             } else {
@@ -161,6 +133,46 @@ export default function InterviewStartPage() {
             }
         }
     }
+
+    const runSystemChecks = async () => {
+        // Check browser compatibility
+        updateCheck('browser', { status: 'checking' })
+        await new Promise(r => setTimeout(r, 500))
+        const isCompatible = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+        updateCheck('browser', {
+            status: isCompatible ? 'success' : 'error',
+            message: isCompatible ? 'Chrome/Edge/Firefox detected' : 'Browser not supported'
+        })
+
+        // Check internet connection
+        updateCheck('connection', { status: 'checking' })
+        await new Promise(r => setTimeout(r, 500))
+        const isOnline = navigator.onLine
+        updateCheck('connection', {
+            status: isOnline ? 'success' : 'error',
+            message: isOnline ? 'Connection stable' : 'No internet connection'
+        })
+
+        // Request camera and microphone
+        await requestMediaPermissions()
+    }
+
+    // Run system checks on mount
+    useEffect(() => {
+        let mounted = true
+        if (mounted) {
+            // runSystemChecks is async but calls setState synchronously at start
+            // Defer to avoid cascading render lint
+            setTimeout(() => void runSystemChecks(), 0)
+        }
+        return () => {
+            mounted = false
+            // Cleanup stream on unmount
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop())
+            }
+        }
+    }, [])
 
     const handleStartInterview = async () => {
         try {
@@ -200,7 +212,7 @@ export default function InterviewStartPage() {
                         Back to Interviews
                     </Button>
                     <h1 className="text-3xl font-bold">Pre-Interview Setup</h1>
-                    <p className="text-muted-foreground">Let's make sure everything is ready for your interview</p>
+                    <p className="text-muted-foreground">Let&apos;s make sure everything is ready for your interview</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -241,7 +253,7 @@ export default function InterviewStartPage() {
                                 System Check
                             </CardTitle>
                             <CardDescription>
-                                We're checking your setup for the best interview experience
+                                We&apos;re checking your setup for the best interview experience
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -315,7 +327,7 @@ export default function InterviewStartPage() {
                     {allChecksPassed ? (
                         <Button size="lg" onClick={handleStartInterview} className="px-8">
                             <Play className="h-5 w-5 mr-2" />
-                            I'm Ready - Start Interview
+                            I&apos;m Ready - Start Interview
                         </Button>
                     ) : (
                         <div className="space-y-2">

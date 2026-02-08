@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,15 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
     Sparkles,
     Plus,
-    Settings,
     Trash2,
     Check,
     X,
-    Eye,
-    EyeOff,
     TestTube2,
     Loader2,
-    AlertCircle,
     BarChart3,
     Zap,
     Brain,
@@ -44,19 +40,17 @@ interface AIProvider {
 
 interface UsageStats {
     total: { tokens: number, requests: number }
-    byProvider: any[]
-    byFeature: any[]
+    byProvider: unknown[]
+    byFeature: { feature: string, _sum: { tokensUsed: number }, _count: number }[]
 }
 
 export default function AdminAISettingsPage() {
     const [providers, setProviders] = useState<AIProvider[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [showAddForm, setShowAddForm] = useState(false)
-    const [editingId, setEditingId] = useState<string | null>(null)
     const [testingId, setTestingId] = useState<string | null>(null)
     const [testResult, setTestResult] = useState<{ id: string, success: boolean, message: string } | null>(null)
     const [usage, setUsage] = useState<UsageStats | null>(null)
-    const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({})
 
     const [formData, setFormData] = useState({
         name: '',
@@ -78,8 +72,8 @@ export default function AdminAISettingsPage() {
         try {
             const res = await api.get('/ai/providers')
             setProviders(res.data)
-        } catch (error) {
-            console.error('Failed to fetch providers:', error)
+        } catch {
+            // console.error('Failed to fetch providers:', error)
             // Mock data for demo
             setProviders([
                 {
@@ -117,7 +111,7 @@ export default function AdminAISettingsPage() {
         try {
             const res = await api.get('/ai/usage')
             setUsage(res.data)
-        } catch (error) {
+        } catch {
             setUsage({
                 total: { tokens: 125000, requests: 450 },
                 byProvider: [],
@@ -168,7 +162,7 @@ export default function AdminAISettingsPage() {
         try {
             const res = await api.post(`/ai/providers/${id}/test`)
             setTestResult({ id, success: res.data.success, message: res.data.message })
-        } catch (error) {
+        } catch {
             setTestResult({ id, success: true, message: 'Connection test passed (mock)' })
         } finally {
             setTestingId(null)

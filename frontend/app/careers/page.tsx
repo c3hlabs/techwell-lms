@@ -58,7 +58,7 @@ export default function CareersPage() {
             <div className="container">
                 {/* Hero */}
                 <div className="text-center mb-16">
-                    <Badge variant="outline" className="mb-4">We're Hiring!</Badge>
+                    <Badge variant="outline" className="mb-4">We&apos;re Hiring!</Badge>
                     <h1 className="text-5xl font-bold mb-4">Join the TechWell Team</h1>
                     <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                         Help us revolutionize how people prepare for interviews and learn new skills
@@ -123,9 +123,9 @@ export default function CareersPage() {
                 {/* No Match CTA */}
                 <Card className="bg-muted/50">
                     <CardContent className="py-8 text-center">
-                        <h3 className="text-2xl font-bold mb-2">Don't see a perfect match?</h3>
+                        <h3 className="text-2xl font-bold mb-2">Don&apos;t see a perfect match?</h3>
                         <p className="text-muted-foreground mb-4">
-                            We're always looking for talented people. Send us your resume and we'll keep you in mind for future openings.
+                            We&apos;re always looking for talented people. Send us your resume and we&apos;ll keep you in mind for future openings.
                         </p>
                         <Link href="/contact">
                             <Button variant="outline">Send Us Your Resume</Button>

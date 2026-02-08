@@ -10,8 +10,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Video, Calendar, User, CheckCircle2, MoreHorizontal, Clock, ArrowRight, VideoOff } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
+interface Interview {
+    id: string
+    role: string
+    difficulty: string
+    score: number | null
+    status: string
+    user: {
+        name: string
+        email: string
+    }
+}
+
 export default function EmployerInterviewsPage() {
-    const [interviews, setInterviews] = useState<any[]>([])
+    const [interviews, setInterviews] = useState<Interview[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const router = useRouter()
 
@@ -21,11 +33,10 @@ export default function EmployerInterviewsPage() {
 
     const fetchInterviews = async () => {
         try {
-            // Reusing student interview stats or finding employer-specific endpoint
             const res = await api.get('/interviews/job-interviews')
             setInterviews(res.data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         } finally {
             setIsLoading(false)
         }

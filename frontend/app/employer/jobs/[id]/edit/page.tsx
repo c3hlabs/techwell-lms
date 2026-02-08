@@ -85,9 +85,10 @@ export default function EditJobPage() {
             await api.put(`/jobs/${params.id}`, formData)
             alert('Job updated successfully!')
             router.push('/employer/jobs')
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error)
-            alert(error.response?.data?.error || 'Failed to update job')
+            const errorMessage = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to update job'
+            alert(errorMessage)
         } finally {
             setIsSaving(false)
         }

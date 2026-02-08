@@ -11,11 +11,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Clock, Video, Plus, Trash2, ExternalLink, Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
+
 
 export default function LiveClassesAdminPage() {
-    const [classes, setClasses] = useState<any[]>([])
-    const [courses, setCourses] = useState<any[]>([])
+    interface Course {
+        id: string
+        title: string
+    }
+    interface LiveClass {
+        id: string
+        title: string
+        platform: string
+        meetingLink?: string
+        scheduledAt: string
+        duration: number
+        course?: Course
+    }
+    const [classes, setClasses] = useState<LiveClass[]>([])
+    const [courses, setCourses] = useState<Course[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [isPostLoading, setIsPostLoading] = useState(false)
     const [showModal, setShowModal] = useState(false)
@@ -118,7 +131,7 @@ export default function LiveClassesAdminPage() {
                                         <SelectValue placeholder="Select Course" />
                                     </SelectTrigger>
                                     <SelectContent className="glass">
-                                        {courses.map((c: any) => (
+                                        {courses.map((c: { id: string, title: string }) => (
                                             <SelectItem key={c.id} value={c.id} className="focus:bg-primary/10">{c.title}</SelectItem>
                                         ))}
                                     </SelectContent>

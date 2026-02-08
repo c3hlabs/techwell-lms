@@ -8,10 +8,20 @@ import { Button } from "@/components/ui/button"
 import { searchApi } from "@/lib/api"
 
 
+interface SearchCourse {
+    id: string
+    title: string
+}
+
+interface SearchInstructor {
+    id: string
+    name: string
+}
+
 export function GlobalSearch() {
     const router = useRouter()
     const [query, setQuery] = React.useState("")
-    const [results, setResults] = React.useState<{ courses: any[]; instructors: any[] } | null>(null)
+    const [results, setResults] = React.useState<{ courses: SearchCourse[]; instructors: SearchInstructor[] } | null>(null)
     const [isLoading, setIsLoading] = React.useState(false)
     const [isOpen, setIsOpen] = React.useState(false)
     const searchRef = React.useRef<HTMLDivElement>(null)
@@ -87,7 +97,7 @@ export function GlobalSearch() {
                                 <div>
                                     <h4 className="text-xs font-semibold text-muted-foreground mb-2 px-2">Courses</h4>
                                     <div className="space-y-1">
-                                        {results.courses.map((c: any) => (
+                                        {results.courses.map((c) => (
                                             <div
                                                 key={c.id}
                                                 className="flex items-center gap-2 p-2 hover:bg-muted rounded cursor-pointer text-sm"
@@ -106,7 +116,7 @@ export function GlobalSearch() {
                                 <div>
                                     <h4 className="text-xs font-semibold text-muted-foreground mb-2 px-2 mt-2">Mentors</h4>
                                     <div className="space-y-1">
-                                        {results.instructors.map((i: any) => (
+                                        {results.instructors.map((i) => (
                                             <div
                                                 key={i.id}
                                                 className="flex items-center gap-2 p-2 hover:bg-muted rounded cursor-pointer text-sm"

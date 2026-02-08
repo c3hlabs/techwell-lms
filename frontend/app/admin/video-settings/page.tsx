@@ -102,7 +102,7 @@ export default function VideoSettingsPage() {
             setShowScheduleForm(false)
             fetchData() // Refresh list
         } catch (error) {
-            console.error(error)
+            console.error('Failed to schedule class:', error)
             alert('Failed to schedule class. Ensure an integration is active.')
         }
     }
@@ -128,7 +128,7 @@ export default function VideoSettingsPage() {
             fetchData()
             setShowAddForm(false)
             resetForm()
-        } catch (error) {
+        } catch {
             alert('Integration added (mock)')
             setShowAddForm(false)
             resetForm()
@@ -139,7 +139,7 @@ export default function VideoSettingsPage() {
         try {
             await api.put(`/video/integrations/${id}`, data)
             fetchData()
-        } catch (error) {
+        } catch {
             setIntegrations(prev => prev.map(i => i.id === id ? { ...i, ...data } : i))
         }
     }
@@ -149,7 +149,7 @@ export default function VideoSettingsPage() {
         try {
             await api.delete(`/video/integrations/${id}`)
             setIntegrations(prev => prev.filter(i => i.id !== id))
-        } catch (error) {
+        } catch {
             setIntegrations(prev => prev.filter(i => i.id !== id))
         }
     }
@@ -160,7 +160,7 @@ export default function VideoSettingsPage() {
         try {
             const res = await api.post(`/video/integrations/${id}/test`)
             setTestResult({ id, success: res.data.success, message: res.data.message })
-        } catch (error) {
+        } catch {
             setTestResult({ id, success: true, message: 'Connection test passed (mock)' })
         } finally {
             setTestingId(null)

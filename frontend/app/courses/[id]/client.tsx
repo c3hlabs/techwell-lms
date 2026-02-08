@@ -19,7 +19,41 @@ import {
     CreditCard
 } from 'lucide-react'
 
-// ... [Copying all interfaces from original file]
+interface RazorpayResponse {
+    razorpay_payment_id: string
+    razorpay_order_id: string
+    razorpay_signature: string
+}
+
+interface RazorpayOptions {
+    key: string
+    amount: number
+    currency: string
+    name: string
+    description: string
+    order_id: string
+    handler: (response: RazorpayResponse) => Promise<void>
+    prefill: {
+        name?: string
+        email?: string
+    }
+    theme: {
+        color: string
+    }
+    modal: {
+        ondismiss: () => void
+    }
+}
+
+declare global {
+    interface Window {
+        Razorpay: new (options: RazorpayOptions) => {
+            open: () => void
+            on: (event: string, handler: (response: { error?: Record<string, unknown> } & Record<string, unknown>) => void) => void
+        }
+    }
+}
+
 interface Module {
     id: string
     title: string
@@ -51,7 +85,7 @@ interface Course {
 }
 
 const loadRazorpay = () => {
-    return new Promise((resolve) => {
+    return new Promise<boolean>((resolve) => {
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.onload = () => resolve(true);
@@ -115,7 +149,7 @@ export default function CourseDetailClient() {
                 name: 'TechWell',
                 description: purchaseType === 'BUNDLE' ? `Course + Interview Bundle` : `Enrollment for ${course!.title}`,
                 order_id: order.id,
-                handler: async function (response: any) {
+                handler: async function (response: RazorpayResponse) {
                     try {
                         await paymentApi.verifyPayment({
                             orderId: order.id,
@@ -144,10 +178,10 @@ export default function CourseDetailClient() {
             };
 
             try {
-                const rzp = new (window as any).Razorpay(options);
+                const rzp = new window.Razorpay(options);
                 rzp.open();
 
-                rzp.on('payment.failed', function (response: any) {
+                rzp.on('payment.failed', function (_response: { error?: Record<string, unknown> } & Record<string, unknown>) {
                     alert("Payment Failed");
                     setIsEnrolling(false);
                 });

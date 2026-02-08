@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import api, { userApi, employerApi } from "@/lib/api"
+import { userApi, employerApi } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,9 +20,6 @@ export default function EmployerProfilePage() {
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
 
-    // User data
-    const [user, setUser] = useState<any>(null)
-
     // Employer Profile Data
     const [profile, setProfile] = useState({
         companyName: '',
@@ -35,35 +32,34 @@ export default function EmployerProfilePage() {
     })
 
     useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const [userRes, profileRes] = await Promise.all([
+                    userApi.getMe(),
+                    employerApi.getProfile().catch(() => ({ data: null }))
+                ])
+
+                // userRes.data is used only for loading check in original, 
+                // but we can just use the resolution of the promise.
+                if (userRes.data && profileRes.data) {
+                    setProfile({
+                        companyName: profileRes.data.companyName || '',
+                        website: profileRes.data.website || '',
+                        description: profileRes.data.description || '',
+                        location: profileRes.data.location || '',
+                        industry: profileRes.data.industry || '',
+                        size: profileRes.data.companySize || '',
+                        logo: profileRes.data.logo || ''
+                    })
+                }
+            } catch {
+                // Error handling
+            } finally {
+                setIsLoading(false)
+            }
+        }
         fetchProfile()
     }, [])
-
-    const fetchProfile = async () => {
-        try {
-            const [userRes, profileRes] = await Promise.all([
-                userApi.getMe(),
-                employerApi.getProfile().catch(() => ({ data: null }))
-            ])
-
-            setUser(userRes.data)
-
-            if (profileRes.data) {
-                setProfile({
-                    companyName: profileRes.data.companyName || '',
-                    website: profileRes.data.website || '',
-                    description: profileRes.data.description || '',
-                    location: profileRes.data.location || '',
-                    industry: profileRes.data.industry || '',
-                    size: profileRes.data.companySize || '',
-                    logo: profileRes.data.logo || ''
-                })
-            }
-        } catch (error) {
-            console.error(error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
 
     const handleChange = (field: string, value: string) => {
         setProfile(prev => ({ ...prev, [field]: value }))
@@ -78,8 +74,7 @@ export default function EmployerProfilePage() {
                 companySize: profile.size // Ensure field name matches backend expectation
             })
             alert('Profile updated successfully!')
-        } catch (error: any) {
-            console.error(error)
+        } catch {
             alert('Failed to update profile')
         } finally {
             setIsSaving(false)

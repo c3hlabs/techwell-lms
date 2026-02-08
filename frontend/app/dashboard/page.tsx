@@ -44,6 +44,26 @@ interface Interview {
     score?: number
 }
 
+interface JobInterview {
+    id: string
+    roundName: string
+    roundType: string
+    scheduledAt: string
+    duration: number
+    location?: string
+    meetingLink?: string
+    application: {
+        job: {
+            title: string
+            employer: {
+                employerProfile?: {
+                    companyName: string
+                }
+            }
+        }
+    }
+}
+
 export default function DashboardPage() {
     const router = useRouter()
     const { user, isLoading: authLoading, logout } = useAuth()
@@ -56,7 +76,7 @@ export default function DashboardPage() {
 
     const [enrollments, setEnrollments] = React.useState<Enrollment[]>([])
     const [interviews, setInterviews] = React.useState<Interview[]>([])
-    const [jobInterviews, setJobInterviews] = React.useState<any[]>([])
+    const [jobInterviews, setJobInterviews] = React.useState<JobInterview[]>([])
     const [isLoading, setIsLoading] = React.useState(true)
 
     React.useEffect(() => {
@@ -93,8 +113,8 @@ export default function DashboardPage() {
                     enrollments: enrollmentsRes.data.enrollments?.length || 0,
                     interviews: interviewStatsRes.data.stats || { total: 0, completed: 0, averageScore: 0 },
                 })
-            } catch (error) {
-                console.error('Failed to fetch dashboard data:', error)
+            } catch {
+                // Error handling
             } finally {
                 setIsLoading(false)
             }
@@ -159,7 +179,7 @@ export default function DashboardPage() {
                     ].map((tab) => (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as any)}
+                            onClick={() => setActiveTab(tab.id as 'overview' | 'learning' | 'interviews' | 'applications' | 'certificates')}
                             className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
                                 ? 'bg-primary text-white shadow-lg shadow-primary/25'
                                 : 'text-muted-foreground hover:bg-white/10 hover:text-foreground'

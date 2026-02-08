@@ -191,7 +191,7 @@ export default function AdminUsersPage() {
                     <p className="text-muted-foreground mt-1">Audit platform access, verify employers, and manage user lifecycles.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" className="glass hover:bg-white/20 border-white/20 shadow-none">
+                    <Button variant="outline" className="glass hover:bg-white/20 border-white/20 shadow-none" onClick={() => exportToCSV(users as unknown as Record<string, unknown>[], { filename: 'users_export', headers: ['name', 'email', 'role', 'isActive'] })}>
                         <Download className="mr-2 h-4 w-4" /> Export Audit
                     </Button>
                 </div>

@@ -15,6 +15,7 @@ import {
     Download,
     Loader2,
     Plus,
+    Mail,
     Search,
     Filter,
     Upload,
@@ -30,7 +31,20 @@ import api from '@/lib/api'
 import { format } from 'date-fns'
 
 export default function LeadsPage() {
-    const [leads, setLeads] = React.useState<any[]>([])
+    interface Lead {
+        id: string
+        name: string
+        email: string
+        phone: string
+        source: string
+        status: string
+        college?: string
+        location?: string
+        qualification?: string
+        notes?: string
+        createdAt: string
+    }
+    const [leads, setLeads] = React.useState<Lead[]>([])
     const [isLoading, setIsLoading] = React.useState(true)
     const [searchQuery, setSearchQuery] = React.useState('')
 
@@ -45,7 +59,7 @@ export default function LeadsPage() {
     const [isUploading, setIsUploading] = React.useState(false)
 
     // Email Dialog
-    const [emailLead, setEmailLead] = React.useState<any>(null)
+    const [emailLead, setEmailLead] = React.useState<Lead | null>(null)
 
     // Form Data
     const [newLead, setNewLead] = React.useState({
@@ -75,7 +89,7 @@ export default function LeadsPage() {
             const res = await api.get(`/leads?${params.toString()}`)
             setLeads(res.data || [])
         } catch (error) {
-            console.error(error)
+            console.error('Failed to fetch leads:', error)
             // Fallback mock data if API fails (during dev)
             setLeads([])
         } finally {
@@ -92,7 +106,7 @@ export default function LeadsPage() {
                 name: '', email: '', phone: '', source: 'Website', status: 'NEW',
                 college: '', location: '', qualification: '', dob: '', notes: ''
             })
-        } catch (error) {
+        } catch {
             alert('Failed to add lead')
         }
     }
@@ -111,7 +125,7 @@ export default function LeadsPage() {
             setIsImportOpen(false)
             fetchLeads()
             alert('Leads imported successfully')
-        } catch (error) {
+        } catch {
             alert('Failed to import leads')
         } finally {
             setIsUploading(false)
@@ -124,7 +138,7 @@ export default function LeadsPage() {
             // Optimistic update
             setLeads(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l))
             await api.put(`/leads/${id}`, { status: newStatus })
-        } catch (error) {
+        } catch {
             fetchLeads() // Revert on error
         }
     }
@@ -134,13 +148,13 @@ export default function LeadsPage() {
         try {
             await api.delete(`/leads/${id}`)
             setLeads(prev => prev.filter(l => l.id !== id))
-        } catch (error) {
+        } catch {
             alert('Failed to delete lead')
         }
     }
 
     const handleExportCSV = () => {
-        exportToCSV(leads, {
+        exportToCSV(leads as unknown as Record<string, unknown>[], {
             filename: `leads_export_${new Date().toISOString().split('T')[0]}`,
             headers: ['name', 'email', 'phone', 'source', 'status', 'college', 'location', 'qualification']
         })

@@ -28,7 +28,7 @@ export async function generateMetadata(
     { params, searchParams }: Props,
     parent: ResolvingMetadata
 ): Promise<Metadata> {
-    const id = params.id
+    const { id } = await params
     const course = await getCourse(id)
 
     if (!course) {
@@ -60,7 +60,8 @@ export async function generateMetadata(
 }
 
 export default async function CoursePage({ params }: Props) {
-    const course = await getCourse(params.id)
+    const { id } = await params
+    const course = await getCourse(id)
 
     // Handle course not found case gracefully (or let client handle loading if we returned null but client fetches too? 
     // Actually client generally re-fetches or we could pass initial data. 

@@ -41,7 +41,7 @@ export default function ContactPage() {
                 <div className="text-center mb-16">
                     <h1 className="text-4xl font-bold mb-4">Get in Touch</h1>
                     <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                        Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                        Have questions? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
                     </p>
                 </div>
 
@@ -50,7 +50,7 @@ export default function ContactPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Send a Message</CardTitle>
-                            <CardDescription>Fill out the form and we'll get back to you within 24 hours.</CardDescription>
+                            <CardDescription>Fill out the form and we&apos;ll get back to you within 24 hours.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {isSubmitted ? (
@@ -58,7 +58,7 @@ export default function ContactPage() {
                                     <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
                                     <h3 className="text-lg font-medium mb-2">Message Sent!</h3>
                                     <p className="text-muted-foreground mb-4">
-                                        Thank you for reaching out. We'll get back to you soon.
+                                        Thank you for reaching out. We&apos;ll get back to you soon.
                                     </p>
                                     <Button variant="outline" onClick={() => setIsSubmitted(false)}>
                                         Send Another Message

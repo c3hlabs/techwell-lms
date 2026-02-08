@@ -52,8 +52,9 @@ export default function RegisterPage() {
         try {
             await register(email, password, name)
             router.push('/dashboard')
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Registration failed. Please try again.')
+        } catch (err: unknown) {
+            const errorMessage = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Registration failed. Please try again.'
+            setError(errorMessage)
         } finally {
             setIsLoading(false)
         }

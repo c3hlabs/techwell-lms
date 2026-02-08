@@ -78,7 +78,7 @@ export default function AIQATrainingPage() {
         try {
             const res = await api.get('/knowledge-base')
             setItems(res.data.entries || [])
-        } catch (error) {
+        } catch {
             // Mock data
             setItems([{
                 id: '1',
@@ -113,7 +113,7 @@ export default function AIQATrainingPage() {
             })
             setGeneratedAnswers(res.data.answers)
             setActiveTab('beginner')
-        } catch (error) {
+        } catch {
             // Mock response
             setGeneratedAnswers({
                 beginner: `**Simple Answer:**\n\n${newQuestion}\n\nIn simple terms, this concept is about understanding the basics. Think of it like learning to ride a bicycle - you start with training wheels.\n\n**Key Points:**\n• Start with the fundamentals\n• Practice with simple examples\n• Build confidence gradually`,
@@ -157,7 +157,7 @@ export default function AIQATrainingPage() {
             setNewQuestion('')
             setGeneratedAnswers(null)
             alert('Q&A saved successfully!')
-        } catch (error) {
+        } catch {
             alert('Q&A saved (mock)')
             setNewQuestion('')
             setGeneratedAnswers(null)
@@ -171,7 +171,7 @@ export default function AIQATrainingPage() {
         try {
             await api.delete(`/knowledge-base/${id}`)
             setItems(prev => prev.filter(i => i.id !== id))
-        } catch (error) {
+        } catch {
             setItems(prev => prev.filter(i => i.id !== id))
         }
     }

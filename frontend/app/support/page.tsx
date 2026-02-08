@@ -22,7 +22,12 @@ interface TicketType {
     status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
     priority: string
     category: string
-    messages: any[]
+    messages: {
+        id: string
+        message: string
+        isStaffReply: boolean
+        createdAt: string
+    }[]
     createdAt: string
     updatedAt: string
 }
@@ -52,8 +57,8 @@ export default function SupportPage() {
         try {
             const res = await api.get('/tickets')
             setTickets(res.data || [])
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         } finally {
             setIsLoading(false)
         }
@@ -71,7 +76,7 @@ export default function SupportPage() {
             setCreateOpen(false)
             setNewTicket({ subject: '', description: '', priority: 'MEDIUM', category: 'GENERAL' })
             fetchTickets()
-        } catch (error) {
+        } catch {
             toast.error('Failed to create ticket')
         } finally {
             setIsSubmitting(false)
@@ -83,7 +88,7 @@ export default function SupportPage() {
             const res = await api.get(`/tickets/${ticketId}`)
             setSelectedTicket(res.data)
             setDetailOpen(true)
-        } catch (error) {
+        } catch {
             toast.error('Failed to load ticket')
         }
     }
@@ -95,7 +100,7 @@ export default function SupportPage() {
             toast.success('Reply sent')
             setReplyText('')
             openTicketDetail(selectedTicket.id)
-        } catch (error) {
+        } catch {
             toast.error('Failed to send reply')
         }
     }

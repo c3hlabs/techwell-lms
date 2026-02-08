@@ -1,10 +1,5 @@
 "use client"
 
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-
 const placementPartners = {
     tier1: ['Google', 'Microsoft', 'Amazon', 'Meta', 'Apple', 'ISRO', 'Honda', 'HP', 'CISCO'],
     tier2: ['Deloitte', 'Accenture', 'TCS', 'Infosys', 'Wipro', 'HCL', 'IndiGo', 'VMware', 'Genpact'],
@@ -14,14 +9,20 @@ const placementPartners = {
 
 export function PlacementPartners() {
     // Extra partners with ratings requested by user
-    const ratedPartners = [
+    interface Partner {
+        name: string
+        rating: string | null
+        color?: string
+    }
+
+    const ratedPartners: Partner[] = [
         { name: "Just Dial", rating: "4.8/5", color: "text-orange-500" },
         { name: "Google My Business", rating: "4.8/5", color: "text-blue-500" },
     ];
 
     // Combine all partners into a single list for the marquee
     // We intertwine rated partners to ensure they appear frequently or at start
-    const allPartners = [
+    const allPartners: Partner[] = [
         ...ratedPartners,
         ...placementPartners.tier1.map(p => ({ name: p, rating: null })),
         ...placementPartners.tier2.map(p => ({ name: p, rating: null })),
@@ -57,7 +58,7 @@ export function PlacementPartners() {
                                 )}
 
                                 {/* Since we don't have SVGs, we use stylized text to represent logos */}
-                                <span className={`text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80 hover:from-primary hover:to-purple-600 transition-all ${(company as any).color ? (company as any).color : ''}`}>
+                                <span className={`text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80 hover:from-primary hover:to-purple-600 transition-all ${company.color ? company.color : ''}`}>
                                     {company.name}
                                 </span>
                             </div>
@@ -70,15 +71,6 @@ export function PlacementPartners() {
                 </div>
             </div>
 
-            <style jsx global>{`
-                @keyframes marquee {
-                    0% { transform: translateX(0); }
-                    100% { transform: translateX(-50%); }
-                }
-                .animate-marquee {
-                    animation: marquee 40s linear infinite;
-                }
-            `}</style>
         </div>
     )
 }

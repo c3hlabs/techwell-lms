@@ -22,7 +22,16 @@ export default function CertificatePage() {
     // or better, fetch 'my enrollment' for this course.
 
     const courseId = params.id as string
-    const [enrollment, setEnrollment] = React.useState<any>(null)
+
+    interface Enrollment {
+        id: string
+        completedAt?: string
+        course: {
+            id: string
+            title: string
+        }
+    }
+    const [enrollment, setEnrollment] = React.useState<Enrollment | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
 
     React.useEffect(() => {
@@ -35,7 +44,7 @@ export default function CertificatePage() {
                 // Since we don't have a direct "get enrollment by course id", 
                 // we iterate "my enrolled".
                 const res = await api.get('/courses/my/enrolled')
-                const found = res.data.enrollments.find((e: any) => e.course.id === courseId)
+                const found = res.data.enrollments.find((e: Enrollment) => e.course.id === courseId)
 
                 if (found) {
                     setEnrollment(found)

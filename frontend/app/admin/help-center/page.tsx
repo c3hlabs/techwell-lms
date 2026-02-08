@@ -12,9 +12,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Ticket, MessageSquare, Clock, User, Send, Loader2, AlertCircle, CheckCircle, Search } from 'lucide-react'
+import { MessageSquare, Send, Loader2, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+
+interface Message {
+    id: string
+    message: string
+    isStaffReply: boolean
+    createdAt: string
+}
 
 interface TicketType {
     id: string
@@ -24,7 +31,7 @@ interface TicketType {
     priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
     category: string
     user: { name: string; email: string }
-    messages: any[]
+    messages: Message[]
     _count?: { messages: number }
     createdAt: string
     updatedAt: string
@@ -50,8 +57,8 @@ export default function HelpCenterPage() {
             if (statusFilter) params.append('status', statusFilter)
             const res = await api.get(`/tickets?${params.toString()}`)
             setTickets(res.data || [])
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         } finally {
             setIsLoading(false)
         }
@@ -62,7 +69,7 @@ export default function HelpCenterPage() {
             const res = await api.get(`/tickets/${ticketId}`)
             setSelectedTicket(res.data)
             setDetailOpen(true)
-        } catch (error) {
+        } catch {
             toast.error('Failed to load ticket')
         }
     }
@@ -74,7 +81,7 @@ export default function HelpCenterPage() {
             toast.success('Reply sent')
             setReplyText('')
             openTicketDetail(selectedTicket.id)
-        } catch (error) {
+        } catch {
             toast.error('Failed to send reply')
         }
     }
@@ -85,9 +92,9 @@ export default function HelpCenterPage() {
             toast.success('Status updated')
             fetchTickets()
             if (selectedTicket?.id === ticketId) {
-                setSelectedTicket({ ...selectedTicket, status: status as any })
+                setSelectedTicket({ ...selectedTicket, status: status as TicketType['status'] })
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to update status')
         }
     }

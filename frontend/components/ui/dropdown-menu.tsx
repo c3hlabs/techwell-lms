@@ -40,11 +40,12 @@ const DropdownMenuTrigger = ({ children, asChild }: { children: React.ReactNode,
     if (child) {
         return React.cloneElement(child, {
             onClick: (e: React.MouseEvent) => {
-                child.props.onClick?.(e);
+                const childProps = child.props as { onClick?: (e: React.MouseEvent) => void };
+                childProps.onClick?.(e);
                 context.setOpen(!context.open);
             },
             "aria-expanded": context.open
-        });
+        } as React.HTMLAttributes<HTMLElement>);
     }
 
     return (
@@ -95,8 +96,8 @@ const DropdownMenuLabel = ({ children }: { children: React.ReactNode }) => (
     </div>
 );
 
-const DropdownMenuSeparator = () => (
-    <div className="-mx-1 my-1 h-px bg-muted" />
+const DropdownMenuSeparator = ({ className }: { className?: string }) => (
+    <div className={cn("-mx-1 my-1 h-px bg-muted", className)} />
 );
 
 export {

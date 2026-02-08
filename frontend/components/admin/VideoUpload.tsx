@@ -2,8 +2,7 @@
 
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress' // Need to check if Progress exists, if not use custom
-import { Upload, X, CheckCircle, FileVideo, Loader2 } from 'lucide-react'
+import { Upload, X, CheckCircle, Loader2 } from 'lucide-react'
 import { uploadApi } from '@/lib/api'
 
 interface VideoUploadProps {
@@ -13,7 +12,6 @@ interface VideoUploadProps {
 }
 
 export function VideoUpload({ onUploadComplete, initialUrl, label = "Upload Video" }: VideoUploadProps) {
-    const [file, setFile] = React.useState<File | null>(null)
     const [previewUrl, setPreviewUrl] = React.useState<string | null>(initialUrl || null)
     const [isUploading, setIsUploading] = React.useState(false)
     const [progress, setProgress] = React.useState(0)
@@ -37,7 +35,6 @@ export function VideoUpload({ onUploadComplete, initialUrl, label = "Upload Vide
             return
         }
 
-        setFile(selectedFile)
         setError(null)
         setProgress(0)
         setIsUploading(true)
@@ -45,10 +42,6 @@ export function VideoUpload({ onUploadComplete, initialUrl, label = "Upload Vide
         try {
             const formData = new FormData()
             formData.append('file', selectedFile)
-
-            // Since axios handles progress, we could hook into it, 
-            // but api wrapper might not expose onUploadProgress easily unless modified.
-            // For now, fake progress or just wait.
 
             // Simulating progress for UX
             const interval = setInterval(() => {
@@ -61,32 +54,50 @@ export function VideoUpload({ onUploadComplete, initialUrl, label = "Upload Vide
                 })
             }, 300)
 
-            const res = await uploadApi.upload(formData)
+            // Explicitly type the response we expect from the API
+            interface UploadResponse {
+                data: {
+                    url: string
+                }
+            }
+
+            const response = await uploadApi.upload(formData)
+            // Use type assertion for the response data
+            const data = (response as unknown as UploadResponse).data
 
             clearInterval(interval)
             setProgress(100)
 
-            // Backend returns relative URL like /uploads/filename.mp4
-            // We need to prepend API URL if it's served from same domain or CDN
-            // For this setup: http://localhost:5000/uploads/...
-            // But frontend accesses /uploads via proxy or direct?
-            // backend serves /uploads static route.
-            const fullUrl = `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${res.data.url}`
+            const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+            // Ensure we handle URL construction correctly
+            const baseUrl = apiBaseUrl.endsWith('/api')
+                ? apiBaseUrl.slice(0, -4)
+                : apiBaseUrl
 
-            setPreviewUrl(fullUrl)
-            onUploadComplete(fullUrl)
+            const finalUrl = data.url.startsWith('http')
+                ? data.url
+                : `${baseUrl}${data.url}`
 
-        } catch (err: any) {
+            setPreviewUrl(finalUrl)
+            onUploadComplete(finalUrl)
+
+        } catch (err: unknown) {
             console.error(err)
-            setError(err.response?.data?.error || 'Upload failed')
-            setFile(null)
+            let message = 'Upload failed'
+            if (err && typeof err === 'object' && 'response' in err) {
+                // Axios error shape
+                const response = (err as { response?: { data?: { error?: string } } }).response
+                message = response?.data?.error || message
+            } else if (err instanceof Error) {
+                message = err.message
+            }
+            setError(message)
         } finally {
             setIsUploading(false)
         }
     }
 
     const handleRemove = () => {
-        setFile(null)
         setPreviewUrl(null)
         onUploadComplete('')
         if (fileInputRef.current) fileInputRef.current.value = ''

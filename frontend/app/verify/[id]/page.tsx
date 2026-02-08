@@ -60,7 +60,7 @@ export default function VerifyCertificatePage() {
         try {
             const res = await api.get(`/certificates/verify/${certificateId}`)
             setCertificate(res.data.certificate)
-        } catch (err: any) {
+        } catch {
             // Mock data for demo
             setCertificate({
                 id: '1',

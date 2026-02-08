@@ -1,40 +1,6 @@
 "use client"
 
 import { Brain, Award, Trophy, BarChart3, Repeat, GraduationCap } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-
-const features = [
-    {
-        icon: Brain,
-        title: 'AI-Powered Personalization',
-        description: 'Adaptive learning that evolves with you and tailors content to your pace.',
-    },
-    {
-        icon: Award,
-        title: 'Industry-Expert Content',
-        description: 'Courses designed by Fortune 500 professionals with real-world experience.',
-    },
-    {
-        icon: Trophy,
-        title: '95% Placement Success',
-        description: 'Our students land jobs in top companies like Google, Amazon, and Microsoft.',
-    },
-    {
-        icon: BarChart3,
-        title: 'Real-Time Feedback',
-        description: 'Instant AI evaluation with actionable improvement tips after each session.',
-    },
-    {
-        icon: Repeat,
-        title: 'Unlimited Practice',
-        description: 'Take as many AI mock interviews as you need to build confidence.',
-    },
-    {
-        icon: GraduationCap,
-        title: 'Certificate Programs',
-        description: 'Industry-recognized credentials to boost your resume and credibility.',
-    },
-]
 
 export function WhyChooseSection() {
     return (
@@ -49,7 +15,7 @@ export function WhyChooseSection() {
                         Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">TechWell?</span>
                     </h2>
                     <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                        We don't just teach technology; we build your entire career ecosystem.
+                        We don&apos;t just teach technology; we build your entire career ecosystem.
                     </p>
                 </div>
 

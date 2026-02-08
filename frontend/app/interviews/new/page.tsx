@@ -108,7 +108,7 @@ export default function NewInterviewPage() {
         }
     }, [authLoading, isAuthenticated, router])
 
-    const updateFormData = (field: string, value: any) => {
+    const updateFormData = (field: string, value: string | number | boolean | File | string[] | null) => {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
@@ -520,7 +520,7 @@ export default function NewInterviewPage() {
                                     <div className="flex items-center gap-2 text-sm">
                                         <Sparkles className="h-4 w-4 text-primary" />
                                         <span className="font-medium">Pro Tip:</span>
-                                        <span className="text-muted-foreground">Schedule when you're most alert for best performance</span>
+                                        <span className="text-muted-foreground">Schedule when you&apos;re most alert for best performance</span>
                                     </div>
                                 </div>
                             </div>
@@ -530,7 +530,7 @@ export default function NewInterviewPage() {
                         {currentStep === 5 && (
                             <div className="space-y-6">
                                 <p className="text-sm text-muted-foreground">
-                                    Before we begin, let's ensure your technical setup is ready for a professional interview.
+                                    Before we begin, let&apos;s ensure your technical setup is ready for a professional interview.
                                 </p>
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between p-4 border rounded-lg bg-background/50">

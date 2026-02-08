@@ -16,9 +16,27 @@ import api from '@/lib/api'
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function ReportsPage() {
-    const [summary, setSummary] = React.useState<any>(null)
-    const [salesPerf, setSalesPerf] = React.useState<any>(null)
-    const [coursePerf, setCoursePerf] = React.useState<any>([])
+    interface BusinessSummary {
+        year: number
+        totalRevenue: number
+        userGrowth: number
+        leadConversionRate: number
+        monthlyRevenue: { month: string, amount: number }[]
+    }
+    interface SalesPerformance {
+        target: number
+        achieved: number
+        status: string
+        period: string
+    }
+    interface CoursePerformance {
+        title: string
+        estimatedRevenue: number
+    }
+
+    const [summary, setSummary] = React.useState<BusinessSummary | null>(null)
+    const [salesPerf, setSalesPerf] = React.useState<SalesPerformance | null>(null)
+    const [coursePerf, setCoursePerf] = React.useState<CoursePerformance[]>([])
     const [isLoading, setIsLoading] = React.useState(true)
 
     React.useEffect(() => {
@@ -71,10 +89,10 @@ export default function ReportsPage() {
 
     const handleExport = (type: 'summary' | 'sales' | 'courses') => {
         const timestamp = new Date().toISOString().split('T')[0]
-        if (type === 'summary') {
-            exportToCSV(summary.monthlyRevenue, { filename: `business_summary_${timestamp}`, headers: ['month', 'amount'] })
+        if (type === 'summary' && summary?.monthlyRevenue) {
+            exportToCSV(summary.monthlyRevenue as unknown as Record<string, unknown>[], { filename: `business_summary_${timestamp}`, headers: ['month', 'amount'] })
         } else if (type === 'courses') {
-            exportToCSV(coursePerf, { filename: `course_performance_${timestamp}`, headers: ['title', 'estimatedRevenue'] })
+            exportToCSV(coursePerf as unknown as Record<string, unknown>[], { filename: `course_performance_${timestamp}`, headers: ['title', 'estimatedRevenue'] })
         } else {
             alert('Exporting Sales Report...')
         }
@@ -158,7 +176,7 @@ export default function ReportsPage() {
                                 tickFormatter={(value) => `₹${value / 1000}k`}
                             />
                             <Tooltip
-                                formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                                formatter={(value: number | string | undefined) => [`₹${Number(value || 0).toLocaleString()}`, 'Revenue']}
                                 contentStyle={{ borderRadius: '8px' }}
                             />
                             <Legend />
@@ -200,15 +218,15 @@ export default function ReportsPage() {
                             {/* Simple Progress Bar */}
                             <div className="h-3 w-full bg-secondary rounded-full overflow-hidden">
                                 <div
-                                    className={`h-full rounded-full transition-all duration-500 ${(salesPerf?.achieved / salesPerf?.target) >= 1 ? 'bg-green-500' :
-                                            (salesPerf?.achieved / salesPerf?.target) >= 0.7 ? 'bg-yellow-500' : 'bg-red-500'
+                                    className={`h-full rounded-full transition-all duration-500 ${(salesPerf?.achieved || 0) / (salesPerf?.target || 1) >= 1 ? 'bg-green-500' :
+                                        (salesPerf?.achieved || 0) / (salesPerf?.target || 1) >= 0.7 ? 'bg-yellow-500' : 'bg-red-500'
                                         }`}
-                                    style={{ width: `${Math.min((salesPerf?.achieved / salesPerf?.target) * 100, 100)}%` }}
+                                    style={{ width: `${Math.min(((salesPerf?.achieved || 0) / (salesPerf?.target || 1)) * 100, 100)}%` }}
                                 ></div>
                             </div>
 
                             <p className="text-sm text-center font-medium">
-                                {((salesPerf?.achieved / salesPerf?.target) * 100).toFixed(1)}% of monthly goal reached
+                                {(((salesPerf?.achieved || 0) / (salesPerf?.target || 1)) * 100).toFixed(1)}% of monthly goal reached
                             </p>
                         </div>
                     </CardContent>
@@ -231,7 +249,7 @@ export default function ReportsPage() {
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="title" type="category" width={120} fontSize={11} />
-                                <Tooltip formatter={(val: number) => `₹${val.toLocaleString()}`} />
+                                <Tooltip formatter={(val: number | string | undefined) => `₹${Number(val || 0).toLocaleString()}`} />
                                 <Bar dataKey="estimatedRevenue" fill="#82ca9d" radius={[0, 4, 4, 0]} barSize={20} />
                             </BarChart>
                         </ResponsiveContainer>

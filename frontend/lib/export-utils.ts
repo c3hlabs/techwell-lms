@@ -10,7 +10,7 @@ interface ExportOptions {
 /**
  * Export data to CSV and trigger download
  */
-export function exportToCSV<T extends Record<string, any>>(
+export function exportToCSV<T extends Record<string, unknown>>(
     data: T[],
     options: ExportOptions
 ): void {

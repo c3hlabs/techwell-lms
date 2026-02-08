@@ -37,7 +37,17 @@ export default function CreateCoursePage() {
     })
 
     // Step 2 Data (Curriculum)
-    const [modules, setModules] = React.useState<any[]>([])
+    interface Lesson {
+        title: string
+        duration: number
+        videoUrl?: string
+    }
+    interface Module {
+        title: string
+        description: string
+        lessons: Lesson[]
+    }
+    const [modules, setModules] = React.useState<Module[]>([])
     const [aiTopic, setAiTopic] = React.useState('')
     const [isGenerating, setIsGenerating] = React.useState(false)
 
@@ -374,7 +384,7 @@ export default function CreateCoursePage() {
                                             </div>
                                             {/* Lessons */}
                                             <div className="pl-8 space-y-4 border-l-2 ml-2">
-                                                {mod.lessons.map((lesson: any, lIdx: number) => (
+                                                {mod.lessons.map((lesson: { title: string, duration: number, videoUrl?: string }, lIdx: number) => (
                                                     <div key={lIdx} className="p-4 bg-muted/30 rounded border space-y-3">
                                                         <div className="flex items-center justify-between">
                                                             <div className="font-medium text-sm">Lesson {lIdx + 1}: {lesson.title}</div>

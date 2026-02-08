@@ -33,8 +33,8 @@ export default function AdminEmployersPage() {
         try {
             const res = await api.get('/employers/pending')
             setRequests(res.data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         } finally {
             setIsLoading(false)
         }
@@ -45,7 +45,7 @@ export default function AdminEmployersPage() {
             await api.put(`/employers/${id}/status`, { status })
             setRequests(prev => prev.filter(r => r.id !== id))
             alert(`Employer ${status.toLowerCase()} successfully`)
-        } catch (error) {
+        } catch {
             alert('Failed to update status')
         }
     }

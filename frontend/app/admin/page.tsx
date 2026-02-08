@@ -15,23 +15,16 @@ import {
     TrendingUp,
     Search,
     UserCheck,
-    UserX,
     Loader2,
-    Shield,
     BarChart3,
-    BrainCircuit,
-    Save
+    BrainCircuit
 } from 'lucide-react'
 import { AdminCharts } from '@/components/admin/AdminCharts'
 import { AdminReportModal } from '@/components/admin/report-modal'
 
 
 // Simple Alert Component if toast missing
-const SimpleAlert = ({ message, type }: { message: string, type: 'success' | 'error' }) => (
-    <div className={`p-4 mb-4 rounded-md ${type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-        {message}
-    </div>
-)
+
 
 interface User {
     id: string
@@ -69,7 +62,7 @@ export default function AdminDashboard() {
 
     const [isLoading, setIsLoading] = React.useState(true)
     const [searchQuery, setSearchQuery] = React.useState('')
-    const [activeTab, setActiveTab] = React.useState<'overview' | 'users' | 'courses' | 'ai-training'>('overview')
+    // const [activeTab, setActiveTab] = React.useState<'overview' | 'users' | 'courses' | 'ai-training'>('overview')
 
     // AI Training State
     const [trainingData, setTrainingData] = React.useState({
@@ -149,14 +142,7 @@ export default function AdminDashboard() {
         )
         : users
 
-    const getRoleBadgeColor = (role: string) => {
-        switch (role) {
-            case 'SUPER_ADMIN': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-            case 'ADMIN': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-            case 'INSTRUCTOR': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-            default: return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-        }
-    }
+
 
     if (authLoading || !user || !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
         return (
@@ -175,7 +161,7 @@ export default function AdminDashboard() {
                         Dashboard Overview
                     </h1>
                     <p className="text-muted-foreground mt-2">
-                        Welcome back, {user?.name}. Here's your platform at a glance.
+                        Welcome back, {user?.name}. Here&apos;s your platform at a glance.
                     </p>
                 </div>
                 <div className="flex items-center gap-2">

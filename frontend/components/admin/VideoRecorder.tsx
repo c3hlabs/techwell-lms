@@ -8,7 +8,6 @@ import { Progress } from '@/components/ui/progress'
 import {
     Video,
     StopCircle,
-    PlayCircle,
     Upload,
     ScreenShare,
     Camera,
@@ -52,6 +51,24 @@ export function VideoRecorder({
     const streamRef = useRef<MediaStream | null>(null)
     const chunksRef = useRef<Blob[]>([])
     const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+    const stopRecording = useCallback(() => {
+        if (timerRef.current) {
+            clearInterval(timerRef.current)
+            timerRef.current = null
+        }
+
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop()
+        }
+
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop())
+            streamRef.current = null
+        }
+
+        setIsRecording(false)
+    }, [])
 
     const startRecording = useCallback(async () => {
         setError(null)
@@ -144,29 +161,12 @@ export function VideoRecorder({
                 })
             }, 1000)
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Failed to start recording:', err)
-            setError(err.message || 'Failed to access camera/microphone')
+            const message = (err as { message?: string })?.message || 'Failed to access camera/microphone'
+            setError(message)
         }
-    }, [mode, maxDuration, onRecordingComplete])
-
-    const stopRecording = useCallback(() => {
-        if (timerRef.current) {
-            clearInterval(timerRef.current)
-            timerRef.current = null
-        }
-
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-            mediaRecorderRef.current.stop()
-        }
-
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop())
-            streamRef.current = null
-        }
-
-        setIsRecording(false)
-    }, [])
+    }, [mode, maxDuration, onRecordingComplete, stopRecording])
 
     const discardRecording = useCallback(() => {
         if (recordedUrl) {

@@ -10,7 +10,14 @@ import { Loader2, Camera, Upload, User } from 'lucide-react'
 import api from '@/lib/api'
 
 export default function SettingsPage() {
-    const [user, setUser] = React.useState<any>(null)
+    interface UserProfile {
+        name: string
+        email: string
+        phone?: string
+        avatar?: string
+        role: string
+    }
+    const [user, setUser] = React.useState<UserProfile | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
     const [isSaving, setIsSaving] = React.useState(false)
 

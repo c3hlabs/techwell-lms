@@ -13,8 +13,18 @@ import { Loader2, Plus, MessageSquare, Phone, Mail, FileText, Send, Bot } from '
 import { format } from 'date-fns'
 import api from '@/lib/api'
 
+interface Ticket {
+    id: string
+    subject: string
+    description: string
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+    category: 'GENERAL' | 'TECHNICAL' | 'BILLING' | 'COURSE_CONTENT'
+    status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+    createdAt: string
+}
+
 export default function UserSupportPage() {
-    const [tickets, setTickets] = React.useState<any[]>([])
+    const [tickets, setTickets] = React.useState<Ticket[]>([])
     const [loading, setLoading] = React.useState(true)
     const [isCreateOpen, setIsCreateOpen] = React.useState(false)
 
@@ -35,8 +45,8 @@ export default function UserSupportPage() {
         try {
             const res = await api.get('/tickets')
             setTickets(res.data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         } finally {
             setLoading(false)
         }
@@ -52,8 +62,7 @@ export default function UserSupportPage() {
             setFormData({ subject: '', description: '', priority: 'MEDIUM', category: 'GENERAL' })
             fetchTickets()
             alert('Ticket created successfully!')
-        } catch (error) {
-            console.error(error)
+        } catch {
             alert('Failed to create ticket')
         } finally {
             setIsSubmitting(false)
@@ -188,7 +197,7 @@ export default function UserSupportPage() {
                         <div className="flex justify-center p-8"><Loader2 className="animate-spin text-muted-foreground" /></div>
                     ) : tickets.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
-                            You haven't created any support tickets yet.
+                            You haven&apos;t created any support tickets yet.
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -222,6 +231,12 @@ export default function UserSupportPage() {
     )
 }
 
-function Badge({ children, variant, className }: any) {
+interface BadgeProps {
+    children: React.ReactNode
+    variant?: 'outline' | 'default' | 'secondary'
+    className?: string
+}
+
+function Badge({ children, className }: BadgeProps) {
     return <span className={`px-2 py-0.5 rounded text-xs font-medium border ${className}`}>{children}</span>
 }

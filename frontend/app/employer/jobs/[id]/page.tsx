@@ -11,8 +11,12 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Mail, Phone, Calendar, Star, MoreVertical, Download } from "lucide-react"
 
-// ATS Kanban Columns
-const COLUMNS = {
+interface ColumnConfig {
+    title: string
+    color: string
+}
+
+const COLUMNS: Record<string, ColumnConfig> = {
     APPLIED: { title: "Applied", color: "bg-gray-100" },
     VIEWED: { title: "Viewed", color: "bg-blue-50" }, // Added Viewed
     SCREENED: { title: "Screened", color: "bg-indigo-50" },
@@ -23,11 +27,33 @@ const COLUMNS = {
     REJECTED: { title: "Rejected", color: "bg-red-50" }
 }
 
+import type { DropResult } from "@hello-pangea/dnd"
+
 export default function ATSPipelinePage() {
     const { id: jobId } = useParams()
     const router = useRouter()
-    const [applications, setApplications] = useState<any[]>([])
-    const [job, setJob] = useState<any>(null)
+    interface Job {
+        id: string
+        title: string
+    }
+
+    interface Application {
+        id: string
+        status: string
+        source: string
+        atsScore: number
+        externalName?: string
+        externalEmail?: string
+        createdAt: string
+        applicant?: {
+            name: string
+            email: string
+            avatar?: string
+        }
+    }
+
+    const [applications, setApplications] = useState<Application[]>([])
+    const [job, setJob] = useState<Job | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -65,7 +91,7 @@ export default function ATSPipelinePage() {
         }
     }
 
-    const onDragEnd = async (result: any) => {
+    const onDragEnd = async (result: DropResult) => {
         if (!result.destination) return
 
         const { draggableId, destination } = result
@@ -89,7 +115,7 @@ export default function ATSPipelinePage() {
     if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
 
     // Group apps by status
-    const columns = Object.keys(COLUMNS).reduce((acc: any, status) => {
+    const columns = Object.keys(COLUMNS).reduce((acc: Record<string, Application[]>, status) => {
         acc[status] = applications.filter(app => app.status === status)
         return acc
     }, {})
@@ -118,7 +144,7 @@ export default function ATSPipelinePage() {
             <DragDropContext onDragEnd={onDragEnd}>
                 <div className="flex-1 overflow-x-auto pb-4">
                     <div className="flex gap-4 min-w-[1200px] h-full">
-                        {Object.entries(COLUMNS).map(([status, config]: any) => (
+                        {(Object.entries(COLUMNS) as [string, ColumnConfig][]).map(([status, config]) => (
                             <div key={status} className={`flex-1 min-w-[280px] rounded-lg p-3 flex flex-col ${config.color}`}>
                                 <h3 className="font-semibold mb-3 flex justify-between items-center">
                                     {config.title}
@@ -132,7 +158,7 @@ export default function ATSPipelinePage() {
                                             {...provided.droppableProps}
                                             className="flex-1 overflow-y-auto space-y-3 min-h-[100px]"
                                         >
-                                            {columns[status]?.map((app: any, index: number) => (
+                                            {columns[status]?.map((app, index: number) => (
                                                 <Draggable key={app.id} draggableId={app.id} index={index}>
                                                     {(provided) => (
                                                         <Card

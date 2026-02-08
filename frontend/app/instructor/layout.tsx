@@ -29,8 +29,8 @@ interface SidebarItemProps {
 const SidebarItem = ({ href, icon: Icon, label, active }: SidebarItemProps) => (
     <Link href={href}>
         <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${active
-                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
-                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+            ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+            : 'hover:bg-muted text-muted-foreground hover:text-foreground'
             }`}>
             <Icon className={`h-5 w-5 ${active ? '' : 'group-hover:scale-110 transition-transform'}`} />
             <span className="font-semibold text-sm">{label}</span>
@@ -122,7 +122,7 @@ export default function InstructorLayout({ children }: { children: React.ReactNo
                             <h2 className="text-xl font-bold text-slate-800">
                                 Welcome back, {user?.name?.split(' ')[0] || 'Instructor'}! 👋
                             </h2>
-                            <p className="text-xs text-muted-foreground font-medium">Here's what's happening today.</p>
+                            <p className="text-xs text-muted-foreground font-medium">Here&apos;s what&apos;s happening today.</p>
                         </div>
 
                         <div className="flex items-center gap-6">

@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     const response = await userApi.getMe();
                     setUser(response.data.user);
                 }
-            } catch (error) {
+            } catch {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
             } finally {
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const response = await userApi.getMe();
             setUser(response.data.user);
-        } catch (error) {
+        } catch {
             logout();
         }
     };

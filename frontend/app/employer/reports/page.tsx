@@ -10,9 +10,35 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Printer, Download, Briefcase, Users, CheckCircle, XCircle, TrendingUp, BarChart3 } from "lucide-react"
 import { Loader2 } from "lucide-react"
 
+interface ReportSummary {
+    totalJobs: number
+    activeJobs: number
+    totalApplications: number
+    hiredCount: number
+    rejectedCount: number
+}
+
+interface RecentApplication {
+    id: string
+    status: string
+    createdAt: string
+    applicant: {
+        name: string
+        email: string
+    }
+    job: {
+        title: string
+    }
+}
+
+interface ReportData {
+    summary: ReportSummary
+    recentApplications: RecentApplication[]
+}
+
 export default function EmployerReportsPage() {
     const router = useRouter()
-    const [data, setData] = useState<any>(null)
+    const [data, setData] = useState<ReportData | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -145,7 +171,7 @@ export default function EmployerReportsPage() {
                         </TableHeader>
                         <TableBody>
                             {recentApplications.length > 0 ? (
-                                recentApplications.map((app: any) => (
+                                recentApplications.map((app) => (
                                     <TableRow key={app.id} className="border-muted/10 hover:bg-primary/5 transition-colors group">
                                         <TableCell className="py-4">
                                             <div className="font-bold text-sm">{app.applicant.name}</div>
@@ -155,8 +181,8 @@ export default function EmployerReportsPage() {
                                         <TableCell className="text-muted-foreground text-sm font-medium">{new Date(app.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</TableCell>
                                         <TableCell className="text-right">
                                             <Badge variant="secondary" className={`rounded-lg px-2.5 py-1 text-[10px] font-bold border-none ${app.status === 'APPOINTED' ? 'bg-emerald-500/10 text-emerald-600' :
-                                                    app.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-600' :
-                                                        'bg-primary/10 text-primary'
+                                                app.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-600' :
+                                                    'bg-primary/10 text-primary'
                                                 }`}>
                                                 {app.status}
                                             </Badge>

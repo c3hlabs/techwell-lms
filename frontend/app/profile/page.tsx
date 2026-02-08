@@ -7,11 +7,21 @@ import { userApi } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { User, Mail, Phone, Save, Loader2, Shield } from 'lucide-react'
+import { User as UserIcon, Mail, Phone, Save, Loader2, Shield } from 'lucide-react'
+
+interface ExtendedUser {
+    id: string
+    name: string
+    email: string
+    role: string
+    phone?: string
+    avatar?: string
+}
 
 export default function ProfilePage() {
     const router = useRouter()
     const { user, isAuthenticated, isLoading: authLoading, refreshUser, logout } = useAuth()
+    const currentUser = user as ExtendedUser | null
 
     const [isEditing, setIsEditing] = React.useState(false)
     const [isSaving, setIsSaving] = React.useState(false)
@@ -28,13 +38,13 @@ export default function ProfilePage() {
     }, [authLoading, isAuthenticated, router])
 
     React.useEffect(() => {
-        if (user) {
+        if (currentUser) {
             setFormData({
-                name: user.name || '',
-                phone: (user as any).phone || '',
+                name: currentUser.name || '',
+                phone: currentUser.phone || '',
             })
         }
-    }, [user])
+    }, [currentUser])
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -46,8 +56,9 @@ export default function ProfilePage() {
             await refreshUser()
             setIsEditing(false)
             setMessage({ type: 'success', text: 'Profile updated successfully!' })
-        } catch (error: any) {
-            setMessage({ type: 'error', text: error.response?.data?.error || 'Failed to update profile' })
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { error?: string } } }
+            setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to update profile' })
         } finally {
             setIsSaving(false)
         }
@@ -62,7 +73,7 @@ export default function ProfilePage() {
         }
     }
 
-    if (authLoading || !user) {
+    if (authLoading || !currentUser) {
         return (
             <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -76,8 +87,8 @@ export default function ProfilePage() {
 
             {message && (
                 <div className={`mb-6 p-3 rounded-lg text-sm ${message.type === 'success'
-                        ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                        : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                    ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                    : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
                     }`}>
                     {message.text}
                 </div>
@@ -88,19 +99,19 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="h-8 w-8 text-primary" />
+                                <UserIcon className="h-8 w-8 text-primary" />
                             </div>
                             <div>
-                                <CardTitle>{user.name}</CardTitle>
+                                <CardTitle>{currentUser.name}</CardTitle>
                                 <CardDescription className="flex items-center gap-2">
                                     <Mail className="h-3 w-3" />
-                                    {user.email}
+                                    {currentUser.email}
                                 </CardDescription>
                             </div>
                         </div>
-                        <span className={`inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full ${getRoleBadgeColor(user.role)}`}>
+                        <span className={`inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full ${getRoleBadgeColor(currentUser.role)}`}>
                             <Shield className="h-3 w-3" />
-                            {user.role}
+                            {currentUser.role}
                         </span>
                     </div>
                 </CardHeader>
@@ -147,19 +158,19 @@ export default function ProfilePage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-sm font-medium text-muted-foreground">Full Name</label>
-                                    <p className="mt-1">{user.name}</p>
+                                    <p className="mt-1">{currentUser.name}</p>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-muted-foreground">Email</label>
-                                    <p className="mt-1">{user.email}</p>
+                                    <p className="mt-1">{currentUser.email}</p>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                                    <p className="mt-1">{(user as any).phone || 'Not set'}</p>
+                                    <p className="mt-1">{currentUser.phone || 'Not set'}</p>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-muted-foreground">Role</label>
-                                    <p className="mt-1">{user.role}</p>
+                                    <p className="mt-1">{currentUser.role}</p>
                                 </div>
                             </div>
                             <div className="flex gap-2 pt-4">

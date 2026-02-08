@@ -6,15 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
 import {
     Mail,
     Server,
-    Check,
-    AlertCircle,
-    Plus,
-    Trash2,
-    Send
+    Plus
 } from 'lucide-react'
 import api from '@/lib/api'
 
@@ -61,8 +57,8 @@ export default function EmailSettingsPage() {
         try {
             const res = await api.get('/email-settings/config')
             setConfigs(res.data)
-        } catch (error) {
-            console.error("Failed to load email settings", error)
+        } catch {
+            // Error logged if needed
         } finally {
             setIsLoading(false)
         }
@@ -93,8 +89,9 @@ export default function EmailSettingsPage() {
         try {
             const res = await api.post('/email-settings/test', { id, toEmail: testEmail })
             alert(res.data.message || 'Test email sent!')
-        } catch (error: any) {
-            alert('Test Failed: ' + (error.response?.data?.details || error.message))
+        } catch (error) {
+            const err = error as { response?: { data?: { details?: string } }, message: string }
+            alert('Test Failed: ' + (err.response?.data?.details || err.message))
         }
     }
 
@@ -131,7 +128,7 @@ export default function EmailSettingsPage() {
                     onChange={e => setTestEmail(e.target.value)}
                     className="max-w-xs bg-background"
                 />
-                <span className="text-sm text-muted-foreground">Use this email for "Test Connection" buttons below.</span>
+                <span className="text-sm text-muted-foreground">Use this email for &quot;Test Connection&quot; buttons below.</span>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

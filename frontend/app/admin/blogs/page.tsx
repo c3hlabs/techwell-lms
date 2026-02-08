@@ -3,25 +3,40 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table'
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, FileText, Globe, Search, MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react'
+import { Plus, Search, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
+interface Blog {
+    id: string
+    title: string
+    content: string
+    summary?: string
+    slug: string
+    status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+    tags: string[]
+    coverImage?: string
+    author?: {
+        name: string
+    }
+    createdAt: string
+}
+
 export default function BlogManagerPage() {
     const router = useRouter()
-    const [blogs, setBlogs] = useState<any[]>([])
+    const [blogs, setBlogs] = useState<Blog[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -47,8 +62,8 @@ export default function BlogManagerPage() {
         try {
             const res = await api.get(`/blogs?search=${search}`)
             setBlogs(res.data.blogs || res.data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error logged if needed
         } finally {
             setIsLoading(false)
         }
@@ -59,7 +74,7 @@ export default function BlogManagerPage() {
         setShowModal(true)
     }
 
-    const handleEditOpen = (blog: any) => {
+    const handleEditOpen = (blog: Blog) => {
         setFormData({
             id: blog.id,
             title: blog.title,
@@ -94,8 +109,8 @@ export default function BlogManagerPage() {
             }
             setShowModal(false)
             fetchBlogs()
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error logged if needed
             toast.error('Failed to save blog')
         } finally {
             setIsSubmitting(false)
@@ -108,7 +123,7 @@ export default function BlogManagerPage() {
             await api.delete(`/blogs/${id}`)
             setBlogs(prev => prev.filter(b => b.id !== id))
             toast.success('Blog deleted')
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete')
         }
     }

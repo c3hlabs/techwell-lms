@@ -87,11 +87,16 @@ export default function QuestionsPage() {
     const [filterDomain, setFilterDomain] = useState<string>('all')
     const [filterDifficulty, setFilterDifficulty] = useState<string>('all')
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        domain: string
+        topic: string
+        content: string
+        difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
+    }>({
         domain: 'IT',
         topic: '',
         content: '',
-        difficulty: 'INTERMEDIATE' as const
+        difficulty: 'INTERMEDIATE'
     })
 
     const handleSubmit = async () => {
@@ -201,7 +206,7 @@ export default function QuestionsPage() {
                                     <Label htmlFor="difficulty">Difficulty</Label>
                                     <Select
                                         value={formData.difficulty}
-                                        onValueChange={(value: any) => setFormData(f => ({ ...f, difficulty: value }))}
+                                        onValueChange={(value: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED') => setFormData(f => ({ ...f, difficulty: value }))}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select difficulty" />

@@ -11,8 +11,26 @@ import { toast } from 'sonner'
 import { format } from 'date-fns'
 
 export default function ReviewsPage() {
-    const [courses, setCourses] = useState<any[]>([])
-    const [blogs, setBlogs] = useState<any[]>([])
+    interface ReviewCourse {
+        id: string
+        title: string
+        instructor?: { name: string }
+        price: number
+        category: string
+        submittedForReviewAt?: string
+        publishStatus: string
+        status: string
+    }
+    interface ReviewBlog {
+        id: string
+        title: string
+        author?: { name: string }
+        summary?: string
+        content: string
+        createdAt: string
+    }
+    const [courses, setCourses] = useState<ReviewCourse[]>([])
+    const [blogs, setBlogs] = useState<ReviewBlog[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -30,14 +48,14 @@ export default function ReviewsPage() {
             ])
 
             // Filter courses client side if API returns all
-            const pendingCourses = (coursesRes.data.courses || coursesRes.data).filter((c: any) =>
+            const pendingCourses = (coursesRes.data.courses || coursesRes.data).filter((c: { publishStatus: string, status: string }) =>
                 c.publishStatus === 'IN_REVIEW' || c.status === 'IN_REVIEW' // handle both legacy/new
             )
 
             setCourses(pendingCourses)
             setBlogs(blogsRes.data.blogs || blogsRes.data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         } finally {
             setIsLoading(false)
         }
@@ -48,7 +66,7 @@ export default function ReviewsPage() {
             await api.patch(`/courses/${id}/status`, { status: 'PUBLISHED' })
             toast.success('Course approved & published')
             setCourses(prev => prev.filter(c => c.id !== id))
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to approve course')
         }
     }
@@ -59,7 +77,7 @@ export default function ReviewsPage() {
             await api.patch(`/courses/${id}/status`, { status: 'DRAFT' })
             toast.success('Course rejected')
             setCourses(prev => prev.filter(c => c.id !== id))
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to reject course')
         }
     }
@@ -69,7 +87,7 @@ export default function ReviewsPage() {
             await api.put(`/blogs/${id}`, { status: 'PUBLISHED' })
             toast.success('Blog post published')
             setBlogs(prev => prev.filter(b => b.id !== id))
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to publish blog')
         }
     }
@@ -80,7 +98,7 @@ export default function ReviewsPage() {
             await api.put(`/blogs/${id}`, { status: 'DRAFT' })
             toast.success('Blog returned to draft')
             setBlogs(prev => prev.filter(b => b.id !== id))
-        } catch (error) {
+        } catch (_error) {
             toast.error('Failed to reject blog')
         }
     }

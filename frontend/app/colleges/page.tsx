@@ -232,7 +232,7 @@ export default function CollegesPage() {
                                     <p className="text-sm text-muted-foreground">Training & Placement Cell</p>
                                 </div>
                             </div>
-                            <p className="text-muted-foreground/80 italic">"ElevateAI has become an integral part of our placement preparation. Students are more confident and better prepared than ever before."</p>
+                            <p className="text-muted-foreground/80 italic">&quot;ElevateAI has become an integral part of our placement preparation. Students are more confident and better prepared than ever before.&quot;</p>
                         </div>
                         <div className="bg-card/40 backdrop-blur p-8 rounded-2xl border border-white/10">
                             <div className="flex items-center gap-4 mb-4">
@@ -244,7 +244,7 @@ export default function CollegesPage() {
                                     <p className="text-sm text-muted-foreground">Career Development Centre</p>
                                 </div>
                             </div>
-                            <p className="text-muted-foreground/80 italic">"We've seen a remarkable improvement in student placement rates. The AI-powered feedback is incredibly valuable."</p>
+                            <p className="text-muted-foreground/80 italic">&quot;We&apos;ve seen a remarkable improvement in student placement rates. The AI-powered feedback is incredibly valuable.&quot;</p>
                         </div>
                     </div>
                 </div>

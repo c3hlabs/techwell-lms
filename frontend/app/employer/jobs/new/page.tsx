@@ -51,9 +51,9 @@ export default function PostJobPage() {
         try {
             await api.post('/jobs', formData)
             router.push('/employer/jobs')
-        } catch (error: any) {
-            console.error(error)
-            alert(error.response?.data?.error || 'Failed to post job')
+        } catch {
+            // Error handling
+            alert('Failed to post job')
         } finally {
             setIsLoading(false)
         }

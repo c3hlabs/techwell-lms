@@ -60,8 +60,9 @@ export default function CreateStaffPage() {
 
             toast.success('Staff member created successfully')
             router.push('/admin/users')
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Failed to create staff member')
+        } catch (error) {
+            const err = error as { response?: { data?: { error?: string } } }
+            toast.error(err.response?.data?.error || 'Failed to create staff member')
             console.error(error)
         } finally {
             setLoading(false)

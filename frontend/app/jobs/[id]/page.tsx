@@ -88,8 +88,9 @@ export default function JobDetailPage() {
             alert('Application Submitted Successfully!')
             setApplicationForm({ resumeUrl: '', coverLetter: '', name: '', email: '', phone: '' })
             // Close dialog logic would go here if controlled
-        } catch (error: any) {
-            alert(error.response?.data?.error || 'Failed to apply')
+        } catch (error: unknown) {
+            const errorMessage = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to apply'
+            alert(errorMessage)
         } finally {
             setIsApplying(false)
         }

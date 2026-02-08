@@ -7,9 +7,9 @@ import api from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Users, Briefcase, Video, Check, ExternalLink, MoreHorizontal, Eye, Clock, ArrowRight } from "lucide-react"
+import { Plus, Users, Briefcase, Video, Check, ExternalLink, MoreHorizontal, Clock, ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,8 +19,25 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+interface Application {
+    id: string
+    status: string
+}
+
+interface Job {
+    id: string
+    title: string
+    location: string
+    type: string
+    status: 'PUBLISHED' | 'DRAFT' | 'CLOSED'
+    applications?: Application[]
+    _count?: {
+        applications: number
+    }
+}
+
 export default function EmployerDashboard() {
-    const [jobs, setJobs] = useState<any[]>([])
+    const [jobs, setJobs] = useState<Job[]>([])
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
 
@@ -32,8 +49,8 @@ export default function EmployerDashboard() {
         try {
             const res = await api.get('/jobs/my/listings')
             setJobs(res.data)
-        } catch (error) {
-            console.error(error)
+        } catch {
+            // Error handling
         } finally {
             setIsLoading(false)
         }
@@ -47,7 +64,7 @@ export default function EmployerDashboard() {
         let newApplications = 0 // Mocking "new" as status 'APPLIED'
 
         jobs.forEach(job => {
-            job.applications?.forEach((app: any) => {
+            job.applications?.forEach((app) => {
                 totalApplications++
                 if (app.status === 'APPLIED') newApplications++
                 if (app.status === 'SELECTED' || app.status === 'APPOINTED' || app.status === 'HIRED') selected++
@@ -66,7 +83,7 @@ export default function EmployerDashboard() {
                     <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
                         Overview
                     </h1>
-                    <p className="text-muted-foreground mt-1">Welcome back! Here's what's happening today.</p>
+                    <p className="text-muted-foreground mt-1">Welcome back! Here&apos;s what&apos;s happening today.</p>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => router.push('/employer/reports')}>Download Report</Button>

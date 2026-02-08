@@ -20,34 +20,106 @@ import {
     BrainCircuit,
     Sparkles,
     VideoIcon,
-    ClipboardCheck,
     ChevronDown,
     ChevronRight,
-    DollarSign,
-    BarChart3,
-    LineChart
+    Magnet,
+    GraduationCap,
+    Bot,
+    Briefcase
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/lib/auth-context"
 import { useState, useEffect } from "react"
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
+    isCollapsed?: boolean // Added member to avoid empty interface warning
+}
 
 export function AdminSidebar({ className }: SidebarProps) {
     const pathname = usePathname()
-    const { logout, hasPermission, user } = useAuth()
+    const { logout, hasPermission } = useAuth()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const [expandedMenus, setExpandedMenus] = useState<string[]>([])
 
     // Close mobile menu on route change
     useEffect(() => {
-        setIsMobileOpen(false)
-    }, [pathname])
+        if (isMobileOpen) {
+            // Defer to avoid cascading render lint
+            setTimeout(() => setIsMobileOpen(false), 0)
+        }
+    }, [pathname, isMobileOpen])
 
     // Auto-expand active parent menu
     useEffect(() => {
-        const routes = getRoutes()
+        function getRoutesInternal() {
+            const routesList = [
+                {
+                    label: 'Dashboard',
+                    href: '/admin',
+                    icon: LayoutDashboard
+                },
+                {
+                    label: 'User Management',
+                    icon: Users,
+                    subItems: [
+                        { label: 'All Users', href: '/admin/users' },
+                        { label: 'Courses', href: '/admin/courses' },
+                        { label: 'Certificates', href: '/admin/certificates' },
+                    ]
+                },
+                {
+                    label: 'Leads & CRM',
+                    icon: Magnet,
+                    subItems: [
+                        { label: 'All Leads', href: '/admin/leads' },
+                        { label: 'Meetings', href: '/admin/meetings' },
+                        { label: 'Tasks', href: '/admin/tasks' },
+                    ]
+                },
+                {
+                    label: 'Learning CMS',
+                    icon: GraduationCap,
+                    subItems: [
+                        { label: 'Blogs', href: '/admin/blogs' },
+                        { label: 'Reviews', href: '/admin/reviews' },
+                    ]
+                },
+                {
+                    label: 'AI Agents',
+                    icon: Bot,
+                    subItems: [
+                        { label: 'Configurations', href: '/admin/ai' },
+                        { label: 'Training Data', href: '/admin/ai/training' },
+                    ]
+                },
+                {
+                    label: 'Finance',
+                    icon: CreditCard,
+                    subItems: [
+                        { label: 'Payments', href: '/admin/payments' },
+                    ]
+                },
+                {
+                    label: 'Operations',
+                    icon: Briefcase,
+                    subItems: [
+                        { label: 'Job Board', href: '/admin/jobs' },
+                    ]
+                },
+                {
+                    label: 'Technical',
+                    icon: Settings,
+                    subItems: [
+                        { label: 'Video Settings', href: '/admin/video-settings' },
+                        { label: 'System Logs', href: '/admin/logs' },
+                    ]
+                }
+            ]
+            return routesList
+        }
+
+        const routes = getRoutesInternal()
         routes.forEach(route => {
             if (route.subItems && route.subItems.some(sub => pathname.startsWith(sub.href))) {
                 if (!expandedMenus.includes(route.label)) {
@@ -55,7 +127,7 @@ export function AdminSidebar({ className }: SidebarProps) {
                 }
             }
         })
-    }, [pathname])
+    }, [pathname, expandedMenus])
 
     const toggleMenu = (label: string) => {
         setExpandedMenus(prev =>

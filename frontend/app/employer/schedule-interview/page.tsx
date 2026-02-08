@@ -14,12 +14,22 @@ import { format } from "date-fns"
 import { Calendar as CalendarIcon, Clock, Link as LinkIcon, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+interface Application {
+    applicant?: {
+        name: string
+    }
+    externalName?: string
+    job?: {
+        title: string
+    }
+}
+
 export default function ScheduleInterviewPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const appId = searchParams.get('appId')
 
-    const [application, setApplication] = useState<any>(null)
+    const [application, setApplication] = useState<Application | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -76,8 +86,8 @@ export default function ScheduleInterviewPage() {
 
             alert("Interview Scheduled Successfully!")
             router.push(`/employer/dashboard/ats/candidate/${appId}`)
-        } catch (error: any) {
-            alert(error.response?.data?.error || "Failed to schedule interview")
+        } catch {
+            alert("Failed to schedule interview")
         } finally {
             setIsSubmitting(false)
         }

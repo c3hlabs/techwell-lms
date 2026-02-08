@@ -41,7 +41,12 @@ interface Message {
 }
 
 export default function AdminSupportPage() {
-    const [staffList, setStaffList] = React.useState<any[]>([])
+    interface StaffUser {
+        id: string
+        name: string
+        role: string
+    }
+    const [staffList, setStaffList] = React.useState<StaffUser[]>([])
     const [internalNotes, setInternalNotes] = React.useState('')
     const [activeTab, setActiveTab] = React.useState('conversation')
 
@@ -101,7 +106,7 @@ export default function AdminSupportPage() {
             // Fallback if backend doesn't support complex filter, we might just get all users and filter client side
             // For now, let's assume we get a list or filter the main fetch if needed.
             if (res.data.users) {
-                setStaffList(res.data.users.filter((u: any) => ['ADMIN', 'SUPER_ADMIN', 'STAFF', 'INSTRUCTOR'].includes(u.role)))
+                setStaffList(res.data.users.filter((u: { role: string }) => ['ADMIN', 'SUPER_ADMIN', 'STAFF', 'INSTRUCTOR'].includes(u.role)))
             }
         } catch (error) {
             console.error("Failed to fetch staff", error)
@@ -112,7 +117,7 @@ export default function AdminSupportPage() {
         if (!selectedTicket) return
         try {
             await api.patch(`/tickets/${selectedTicket.id}/assign`, { assignedTo: staffId })
-            setSelectedTicket({ ...selectedTicket, assignedTo: staffId } as any)
+            setSelectedTicket({ ...selectedTicket, assignedTo: staffId } as Ticket & { assignedTo: string })
             fetchTickets()
         } catch (error) {
             console.error(error)
@@ -155,7 +160,7 @@ export default function AdminSupportPage() {
         if (!selectedTicket) return
         try {
             await api.put(`/tickets/${selectedTicket.id}/status`, { status: newStatus })
-            setSelectedTicket({ ...selectedTicket, status: newStatus as any })
+            setSelectedTicket({ ...selectedTicket, status: newStatus as Ticket['status'] })
             fetchTickets()
         } catch (error) {
             console.error(error)
@@ -258,7 +263,7 @@ export default function AdminSupportPage() {
                                 </p>
                             </div>
                             <div className="flex gap-2">
-                                <Select onValueChange={handleAssign} value={(selectedTicket as any).assignedTo || ''}>
+                                <Select onValueChange={handleAssign} value={(selectedTicket as Ticket & { assignedTo?: string }).assignedTo || ''}>
                                     <SelectTrigger className="w-[180px]">
                                         <SelectValue placeholder="Assign to..." />
                                     </SelectTrigger>
@@ -299,7 +304,7 @@ export default function AdminSupportPage() {
                                 className={`py-2 text-sm font-medium border-b-2 ${activeTab === 'notes' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
                                 onClick={() => {
                                     setActiveTab('notes')
-                                    setInternalNotes((selectedTicket as any).internalNotes || '')
+                                    setInternalNotes((selectedTicket as Ticket & { internalNotes?: string }).internalNotes || '')
                                 }}
                             >
                                 Internal Notes
