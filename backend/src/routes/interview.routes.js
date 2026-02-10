@@ -315,7 +315,24 @@ router.post('/:id/next-question', authenticate, async (req, res, next) => {
 
         if (!interview) return res.status(404).json({ error: 'Interview not found' });
 
-        const aiResponse = await aiService.generateNextQuestion(interview.id);
+        // Pass previous response for adaptive logic?
+        // We need to fetch the last response for this interview to pass to AI service
+        const lastResponse = await prisma.interviewResponse.findFirst({
+            where: { interviewId: interview.id },
+            orderBy: { createdAt: 'desc' },
+            include: { question: true }
+        });
+
+        const aiResponse = await aiService.generateNextQuestion(interview.id, lastResponse);
+
+        if (!aiResponse) {
+            // Mark as completed
+            await prisma.interview.update({
+                where: { id: interview.id },
+                data: { status: 'COMPLETED', completedAt: new Date() }
+            });
+            return res.json({ message: 'Interview completed', completed: true });
+        }
 
         // Store question in DB
         const question = await prisma.interviewQuestion.create({
@@ -324,6 +341,7 @@ router.post('/:id/next-question', authenticate, async (req, res, next) => {
                 question: aiResponse.question,
                 type: aiResponse.type,
                 avatarId: aiResponse.avatarId,
+                avatarRole: aiResponse.avatarRole,
                 order: (await prisma.interviewQuestion.count({ where: { interviewId: interview.id } })) + 1
             }
         });
@@ -341,19 +359,22 @@ router.post('/:id/next-question', authenticate, async (req, res, next) => {
  */
 router.post('/:id/response', authenticate, async (req, res, next) => {
     try {
-        const { questionId, answer } = req.body;
+        const { questionId, answer, code } = req.body;
 
-        // Save response
+        // Evaluate (Pass code if available)
+        const evaluation = await aiService.evaluateResponse(questionId, answer, code);
+
+        // Save response with evaluation
         const response = await prisma.interviewResponse.create({
             data: {
                 interviewId: req.params.id,
                 questionId,
-                transcript: answer
+                transcript: answer,
+                code, // Save the code!
+                score: evaluation.score,
+                feedback: evaluation.feedback
             }
         });
-
-        // Evaluate
-        const evaluation = await aiService.evaluateResponse(questionId, answer);
 
         res.json({
             response,

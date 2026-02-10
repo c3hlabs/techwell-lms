@@ -134,6 +134,28 @@ export default function LeadsPage() {
     }
 
     const handleStatusChange = async (id: string, newStatus: string) => {
+        // Special handling for CONVERTED status
+        if (newStatus === 'CONVERTED') {
+            if (!confirm('This will create a new Student account and email login credentials to the user. Continue?')) {
+                // Revert selection if cancelled (this is tricky with select default behavior, need force update)
+                fetchLeads()
+                return
+            }
+
+            try {
+                // Call convert endpoint
+                await api.post(`/leads/${id}/convert`)
+                alert('Lead converted successfully! Credentials sent to user.')
+
+                // Update local state
+                setLeads(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l))
+            } catch (error) {
+                console.error('Conversion failed:', error)
+                alert('Failed to convert lead. Check console for details.')
+            }
+            return
+        }
+
         try {
             // Optimistic update
             setLeads(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l))

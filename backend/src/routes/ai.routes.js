@@ -228,4 +228,25 @@ router.post('/send-email', authenticate, async (req, res) => {
     }, 1000);
 });
 
+// Generate Interview Questions (Admin)
+router.post('/generate-questions', authenticate, async (req, res) => {
+    try {
+        const { domain, role, company, difficulty, count } = req.body;
+        const aiService = require('../services/ai.service');
+
+        const questions = await aiService.generateInterviewQuestions({
+            domain,
+            role,
+            company,
+            difficulty,
+            count
+        });
+
+        res.json({ questions });
+    } catch (error) {
+        console.error('Generation Error:', error);
+        res.status(500).json({ error: 'Failed to generate questions' });
+    }
+});
+
 module.exports = router;

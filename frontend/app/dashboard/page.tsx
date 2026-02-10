@@ -20,6 +20,7 @@ import {
     PlayCircle,
     Briefcase
 } from 'lucide-react'
+import { NewInterviewDialog } from '@/components/interviews/NewInterviewDialog'
 
 // Interface definitions (Mocking locally for dashboard view if needed, or inferred)
 interface Enrollment {
@@ -191,6 +192,101 @@ export default function DashboardPage() {
                     ))}
                 </div>
 
+                {/* PROMINENT UPCOMING INTERVIEWS BANNER */}
+                {jobInterviews.length > 0 && (
+                    <div className="mb-8 glass-card rounded-2xl p-6 border-2 border-primary/30 bg-gradient-to-r from-primary/5 via-transparent to-purple-500/5 relative overflow-hidden animate-in fade-in slide-in-from-top-2 duration-500">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl" />
+
+                        <div className="flex items-center gap-3 mb-4 relative z-10">
+                            <div className="p-2 bg-primary/20 rounded-xl">
+                                <Calendar className="h-6 w-6 text-primary animate-pulse" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold">Upcoming Interviews</h2>
+                                <p className="text-sm text-muted-foreground">You have {jobInterviews.length} scheduled interview{jobInterviews.length > 1 ? 's' : ''}</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 relative z-10">
+                            {jobInterviews.slice(0, 3).map((interview) => {
+                                const interviewDate = new Date(interview.scheduledAt);
+                                const isToday = interviewDate.toDateString() === new Date().toDateString();
+                                const isTomorrow = interviewDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+                                const isPast = interviewDate < new Date();
+                                const isWithinHour = !isPast && (interviewDate.getTime() - Date.now()) < 3600000;
+
+                                return (
+                                    <div
+                                        key={interview.id}
+                                        className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-background/80 backdrop-blur-sm border ${isWithinHour ? 'border-green-500 shadow-lg shadow-green-500/20' :
+                                            isToday ? 'border-primary/50' : 'border-border/50'
+                                            }`}
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            <div className={`flex flex-col items-center justify-center p-3 rounded-xl min-w-[70px] ${isWithinHour ? 'bg-green-500/20 text-green-600' :
+                                                isToday ? 'bg-primary/20 text-primary' :
+                                                    isTomorrow ? 'bg-blue-500/20 text-blue-600' :
+                                                        'bg-muted text-muted-foreground'
+                                                }`}>
+                                                <span className="text-xs font-medium uppercase">
+                                                    {isToday ? 'Today' : isTomorrow ? 'Tomorrow' : interviewDate.toLocaleDateString('en-US', { weekday: 'short' })}
+                                                </span>
+                                                <span className="text-2xl font-bold">{interviewDate.getDate()}</span>
+                                                <span className="text-xs">{interviewDate.toLocaleDateString('en-US', { month: 'short' })}</span>
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-lg">{interview.application?.job?.title || interview.roundName}</h3>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {interview.application?.job?.employer?.employerProfile?.companyName || 'Company'} • {interview.roundName}
+                                                </p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Clock className="h-3 w-3 text-muted-foreground" />
+                                                    <span className="text-sm font-medium">
+                                                        {interviewDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} ({interview.duration} min)
+                                                    </span>
+                                                    {isWithinHour && (
+                                                        <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-600 rounded-full font-medium animate-pulse">
+                                                            Starting Soon!
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 md:flex-shrink-0">
+                                            {interview.meetingLink ? (
+                                                <Button
+                                                    size="lg"
+                                                    className={`gap-2 font-semibold ${isWithinHour
+                                                        ? 'bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/30'
+                                                        : 'bg-primary hover:bg-primary/90'
+                                                        }`}
+                                                    onClick={() => window.open(interview.meetingLink, '_blank')}
+                                                >
+                                                    <Video className="h-4 w-4" />
+                                                    {isWithinHour ? 'Join Now' : 'Join Meeting'}
+                                                </Button>
+                                            ) : (
+                                                <Button size="lg" variant="outline" className="gap-2" disabled>
+                                                    <Video className="h-4 w-4" />
+                                                    Link pending...
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {jobInterviews.length > 3 && (
+                                <Button variant="link" className="w-full text-primary" onClick={() => setActiveTab('interviews')}>
+                                    View all {jobInterviews.length} interviews →
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {isLoading ? (
                     <div className="flex justify-center py-20">
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -323,7 +419,7 @@ export default function DashboardPage() {
                                             ) : (
                                                 <div className="text-center py-6">
                                                     <p className="text-muted-foreground mb-4">No interviews taken yet.</p>
-                                                    <Button variant="outline" className="glass" onClick={() => router.push('/interviews')}>Start Interview</Button>
+                                                    <NewInterviewDialog trigger={<Button variant="outline" className="glass">Start Interview</Button>} />
                                                 </div>
                                             )}
                                         </div>
@@ -396,7 +492,7 @@ export default function DashboardPage() {
                             <div className="space-y-6">
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">Interview History</h2>
-                                    <Button onClick={() => router.push('/interviews')} className="glass">New Mock Interview</Button>
+                                    <NewInterviewDialog />
                                 </div>
 
                                 {/* Scheduled Job Interviews Section */}
@@ -546,6 +642,6 @@ export default function DashboardPage() {
                     </>
                 )}
             </div>
-        </div>
+        </div >
     )
 }

@@ -4,6 +4,8 @@ const { authenticate, authorize } = require('../middleware/auth');
 const csv = require('csv-parser');
 const fs = require('fs');
 const multer = require('multer');
+const bcrypt = require('bcryptjs');
+const { sendEmail } = require('../utils/emailSender');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -423,6 +425,86 @@ router.post('/webhook/generic', async (req, res) => {
     } catch (error) {
         console.error('Generic Webhook Error:', error);
         res.status(500).json({ error: 'Failed to ingest lead' });
+    }
+});
+
+
+/**
+ * @route   POST /api/leads/:id/convert
+ * @desc    Convert Lead to Student (Create User Account)
+ * @access  Private/Admin
+ */
+router.post('/:id/convert', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const lead = await prisma.lead.findUnique({ where: { id } });
+
+        if (!lead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+
+        if (lead.status === 'CONVERTED') {
+            return res.status(400).json({ error: 'Lead is already converted' });
+        }
+
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({ where: { email: lead.email } });
+        if (existingUser) {
+            // Just link user? or Error?
+            // For now, let's link and update status
+            await prisma.lead.update({
+                where: { id },
+                data: { status: 'CONVERTED', notes: 'Linked to existing user account.' }
+            });
+            return res.status(200).json({ message: 'Lead linked to existing user successfully' });
+        }
+
+        // Create new student user
+        const tempPassword = `TechWell@${Math.floor(1000 + Math.random() * 9000)}`;
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        const newUser = await prisma.user.create({
+            data: {
+                name: lead.name,
+                email: lead.email,
+                phone: lead.phone,
+                password: hashedPassword,
+                role: 'STUDENT',
+                emailVerified: true, // Auto-verify since admin created it
+                isActive: true
+            }
+        });
+
+        // Update Lead status
+        await prisma.lead.update({
+            where: { id },
+            data: { status: 'CONVERTED', notes: `Converted to Student User (ID: ${newUser.id}) on ${new Date().toLocaleDateString()}` }
+        });
+
+        // Send Email with credentials
+        // Non-blocking
+        sendEmail({
+            to: newUser.email,
+            subject: 'Welcome to TechWell - Your Student Account is Ready',
+            text: `Hello ${newUser.name},\n\nYour student account has been created. Use the following credentials to login:\n\nEmail: ${newUser.email}\nPassword: ${tempPassword}\n\nPlease change your password after logging in.\n\nLogin URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/login\n\nBest Regards,\nTechWell Team`,
+            html: `<div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2 style="color: #1469E2;">Welcome to TechWell, ${newUser.name}!</h2>
+                    <p>Your student account has been successfully created.</p>
+                    <div style="background: #f4f6f8; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p><strong>Login Credentials:</strong></p>
+                        <p>Email: <strong>${newUser.email}</strong></p>
+                        <p>Temporary Password: <strong>${tempPassword}</strong></p>
+                    </div>
+                    <p>Please <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login">Login Here</a> and change your password immediately.</p>
+                    <br/>
+                    <p>Best Regards,<br/><strong>The TechWell Team</strong></p>
+                   </div>`
+        }).catch(err => console.error('Credential Email Failed:', err.message));
+
+        res.status(200).json({ message: 'Lead converted to Student successfully', user: newUser });
+
+    } catch (error) {
+        next(error);
     }
 });
 

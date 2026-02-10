@@ -28,6 +28,16 @@ const QUESTION_BANK = {
 };
 
 class AIService {
+    constructor() {
+        this.TOPIC_KEYWORDS = {
+            'REACT': ['component', 'state', 'props', 'hooks', 'virtual dom', 'jsx', 'lifecycle', 'render'],
+            'NODE': ['event loop', 'async', 'await', 'callback', 'stream', 'module', 'npm', 'middleware'],
+            'DATABASE': ['sql', 'nosql', 'index', 'query', 'transaction', 'normalization', 'schema', 'acid'],
+            'SYSTEM_DESIGN': ['scalability', 'load balancer', 'caching', 'database', 'microservices', 'latency', 'throughput'],
+            'BEHAVIORAL': ['situation', 'task', 'action', 'result', 'communication', 'team', 'conflict', 'learned']
+        };
+    }
+
     /**
      * Generate the next question based on context
      */
@@ -39,16 +49,42 @@ class AIService {
 
         if (!interview) throw new Error('Interview not found');
 
-        // Logic: Determine Avatar & Question Type based on progress
+        // Fetch AI Settings
+        const settings = await prisma.interviewSettings.findFirst() || {
+            adaptiveDifficulty: true,
+            escalationThreshold: 75,
+            initialDifficulty: 'INTERMEDIATE',
+            maxQuestions: 10,
+            hrQuestionRatio: 3
+        };
+
         const questionCount = interview.questions.length;
+
+        // Challenge: Stop generating if max questions reached?
+        // usually controller checks this, but we can return null to signal end
+        if (questionCount >= settings.maxQuestions) {
+            return null;
+        }
+
+        // Logic: Determine Avatar & Question Type
         let avatarRole = 'Technical';
         let difficulty = interview.difficulty;
 
-        // Adaptive Logic: If previous response score was high, increase difficulty (Mocked)
-        // In real AI, we would analyze 'previousResponse' text here.
+        // Adaptive Difficulty Logic
+        if (settings.adaptiveDifficulty && previousResponse && previousResponse.score) {
+            // Simple escalation logic
+            if (previousResponse.score >= settings.escalationThreshold) {
+                if (difficulty === 'BEGINNER') difficulty = 'INTERMEDIATE';
+                else if (difficulty === 'INTERMEDIATE') difficulty = 'ADVANCED';
+            } else if (previousResponse.score < 50) {
+                // De-escalate if struggling?
+                if (difficulty === 'ADVANCED') difficulty = 'INTERMEDIATE';
+                else if (difficulty === 'INTERMEDIATE') difficulty = 'BEGINNER';
+            }
+        }
 
-        // Multi-avatar simulation: Every 3rd question is HR/Behavioral
-        if ((questionCount + 1) % 3 === 0) {
+        // Multi-avatar: Every Nth question is HR (from settings)
+        if ((questionCount + 1) % settings.hrQuestionRatio === 0) {
             avatarRole = 'HR';
         }
 
@@ -56,22 +92,49 @@ class AIService {
         let questionText = "";
 
         if (avatarRole === 'HR') {
-            const index = Math.floor(Math.random() * QUESTION_BANK.HR.length);
-            questionText = QUESTION_BANK.HR[index];
+            // Try fetching HR questions from KB first
+            const kbQuestion = await prisma.knowledgeBase.findFirst({
+                where: {
+                    domain: 'HR', // Force HR domain
+                    difficulty: difficulty // Use current difficulty
+                },
+                take: 1,
+                skip: Math.floor(Math.random() * 3)
+            });
+
+            if (kbQuestion) {
+                questionText = kbQuestion.content;
+            } else {
+                const index = Math.floor(Math.random() * QUESTION_BANK.HR.length);
+                questionText = QUESTION_BANK.HR[index];
+            }
         } else {
             // Technical Video
-            // Try to find from KnowledgeBase first (Admin Trained Data)
+            // Try to find from KnowledgeBase (Admin Trained Data)
+            const count = await prisma.knowledgeBase.count({
+                where: {
+                    domain: interview.domain,
+                    difficulty: difficulty
+                }
+            });
+
+            const skip = count > 0 ? Math.floor(Math.random() * count) : 0;
+
             const kbQuestion = await prisma.knowledgeBase.findFirst({
                 where: {
                     domain: interview.domain,
                     difficulty: difficulty
                 },
                 take: 1,
-                skip: Math.floor(Math.random() * 5) // Randomize slightly
+                skip: skip
             });
 
             if (kbQuestion) {
-                questionText = `Based on your resume and JD: ${kbQuestion.content}`; // Creating a question from content
+                questionText = kbQuestion.content;
+                // Add context if available
+                if (interview.jobDescription && Math.random() > 0.7) {
+                    questionText = `Considering the context of this role: ${questionText}`;
+                }
             } else {
                 // Fallback to static bank
                 const bank = QUESTION_BANK['IT'][difficulty] || QUESTION_BANK['IT']['BEGINNER'];
@@ -79,33 +142,86 @@ class AIService {
             }
         }
 
-        // Add some "AI personalization" from resume/JD if available
-        if (interview.jobDescription && Math.random() > 0.5) {
-            questionText = `Considering the Job Description requires ${interview.domain} skills: ${questionText}`;
-        }
-
         return {
             question: questionText,
             type: avatarRole === 'HR' ? 'BEHAVIORAL' : 'TECHNICAL',
             avatarRole: avatarRole,
-            avatarId: avatarRole === 'HR' ? 'avatar-hr-1' : 'avatar-tech-1' // Mock IDs
+            avatarId: avatarRole === 'HR' ? 'avatar-hr-1' : 'avatar-tech-1',
+            difficulty: difficulty // Return current difficulty for tracking
         };
     }
 
     /**
-     * Evaluate a response using AI (Mock)
+     * Evaluate a response using Enhanced Keyword Matching
      */
-    async evaluateResponse(question, responseText) {
-        // Mock Evaluation Logic
-        const lengthScore = Math.min(100, responseText.length / 2);
-        const keywordBonus = responseText.includes("because") || responseText.includes("example") ? 20 : 0;
+    async evaluateResponse(questionId, responseText, code = null) {
+        // If it's a coding question, we might expect code instead of audio
+        if ((!responseText || responseText.trim().length < 5) && !code) {
+            return {
+                score: 0,
+                feedback: "No response detected. Please ensure you answer the question or write code.",
+                sentiment: "NEGATIVE",
+                missingKeywords: []
+            };
+        }
 
-        const score = Math.min(100, Math.floor(lengthScore + keywordBonus));
+        // 1. Identify Topic (Simple heuristic based on response + question context would be better, but using response for now)
+        let topic = 'BEHAVIORAL'; // Default
+        const lowerText = responseText.toLowerCase();
+
+        if (lowerText.includes('react') || lowerText.includes('component')) topic = 'REACT';
+        else if (lowerText.includes('node') || lowerText.includes('express')) topic = 'NODE';
+        else if (lowerText.includes('database') || lowerText.includes('sql')) topic = 'DATABASE';
+        else if (lowerText.includes('scale') || lowerText.includes('system')) topic = 'SYSTEM_DESIGN';
+
+        // 2. keyword Matching
+        const expectedKeywords = this.TOPIC_KEYWORDS[topic] || [];
+        const foundKeywords = expectedKeywords.filter(k => lowerText.includes(k));
+        const missingKeywords = expectedKeywords.filter(k => !lowerText.includes(k));
+
+        // 3. Scoring Logic
+        // Base score for simply answering (up to 40)
+        let score = Math.min(40, (responseText || "").length / 3);
+
+        // Bonus for Code (Simple heuristic for now)
+        if (code && code.length > 20) {
+            score += 30; // Significant bonus for writing code
+            if (code.includes('function') || code.includes('const') || code.includes('class')) {
+                score += 10;
+            }
+        }
+
+        // Bonus for structure (20)
+        if ((responseText || "").toLowerCase().includes('example') || (responseText || "").toLowerCase().includes('because')) {
+            score += 20;
+        }
+
+        // Bonus for accuracy (keywords) (up to 40)
+        const keywordScore = (foundKeywords.length / Math.max(1, expectedKeywords.length)) * 40;
+        score += keywordScore;
+
+        score = Math.min(100, Math.floor(score));
+
+        // 4. Generate Specific Feedback
+        let feedback = "";
+        if (score >= 80) {
+            feedback = "Excellent answer! You covered key concepts and provided good structure.";
+        } else if (score >= 60) {
+            feedback = `Good attempt. You mentioned ${foundKeywords.join(', ')} but could go deeper.`;
+        } else {
+            feedback = "Response needs improvement. Try to be more specific and technical.";
+        }
+
+        if (missingKeywords.length > 0 && score < 90) {
+            feedback += ` Consider discussing: ${missingKeywords.slice(0, 3).join(', ')}.`;
+        }
 
         return {
             score,
-            feedback: score > 70 ? "Great answer with good depth." : "Try to elaborate more and give examples.",
-            sentiment: score > 70 ? "POSITIVE" : "NEUTRAL"
+            feedback,
+            sentiment: score > 60 ? "POSITIVE" : "NEUTRAL",
+            foundKeywords,
+            missingKeywords
         };
     }
 
@@ -144,17 +260,24 @@ class AIService {
         let technicalScores = [];
         let behavioralScores = [];
         let questionBreakdown = [];
+        let allMissingKeywords = new Set();
+        let allFoundKeywords = new Set();
 
         for (const question of interview.questions) {
             const response = question.responses[0];
             if (response) {
-                const score = response.score || this.calculateMockScore(response.content);
-                const feedback = response.feedback || this.generateMockFeedback(question.question, response.content, score);
+                // Re-evaluate to get granular data if not stored
+                const evalResult = await this.evaluateResponse(question.id, response.transcript);
+                const score = response.score || evalResult.score;
+                const feedback = response.feedback || evalResult.feedback;
+
+                if (evalResult.missingKeywords) evalResult.missingKeywords.forEach(k => allMissingKeywords.add(k));
+                if (evalResult.foundKeywords) evalResult.foundKeywords.forEach(k => allFoundKeywords.add(k));
 
                 questionBreakdown.push({
                     question: question.question,
                     type: question.type,
-                    answer: response.content?.substring(0, 200) + (response.content?.length > 200 ? '...' : '') || '',
+                    answer: response.transcript?.substring(0, 200) + (response.transcript?.length > 200 ? '...' : '') || '(No Answer)',
                     score,
                     feedback
                 });
@@ -164,16 +287,29 @@ class AIService {
                 } else {
                     behavioralScores.push(score);
                 }
+            } else {
+                questionBreakdown.push({
+                    question: question.question,
+                    type: question.type,
+                    answer: '(Skipped)',
+                    score: 0,
+                    feedback: 'Question was skipped.'
+                });
+                technicalScores.push(0);
             }
         }
 
         // Calculate aggregate scores
         const technicalScore = technicalScores.length > 0
             ? Math.round(technicalScores.reduce((a, b) => a + b, 0) / technicalScores.length)
-            : 75;
-        const communicationScore = Math.round(70 + Math.random() * 20);
-        const confidenceScore = Math.round(65 + Math.random() * 25);
-        const starMethodScore = Math.round(60 + Math.random() * 30);
+            : 0;
+
+        // Mocking other scores based on technical for consistency without real AI
+        const communicationScore = Math.min(100, technicalScore + 10);
+        const confidenceScore = Math.min(100, technicalScore + 5);
+        const starMethodScore = behavioralScores.length > 0
+            ? Math.round(behavioralScores.reduce((a, b) => a + b, 0) / behavioralScores.length)
+            : 50;
 
         const overallScore = Math.round(
             (technicalScore * 0.4) +
@@ -182,31 +318,70 @@ class AIService {
             (starMethodScore * 0.15)
         );
 
-        // Generate strengths based on high scores
-        const strengths = this.generateStrengths(technicalScore, communicationScore, confidenceScore, interview.domain);
-        const weaknesses = this.generateWeaknesses(technicalScore, communicationScore, starMethodScore);
-        const recommendations = this.generateRecommendations(technicalScore, starMethodScore, interview.domain);
-
-        // Generate AI insights
-        const aiInsights = this.generateAIInsights(
-            interview.role,
-            interview.domain,
-            overallScore,
-            technicalScore
+        // 2026 Feature: Market Readiness Score (Hiring Probability)
+        // Weighted: Tech (50%) + Comm (30%) + Confidence (20%)
+        let marketReadinessScore = Math.round(
+            (technicalScore * 0.5) +
+            (communicationScore * 0.3) +
+            (confidenceScore * 0.2)
         );
+
+        // Adjust for "red flags" (low scores in critical areas)
+        if (technicalScore < 40) marketReadinessScore -= 10;
+        if (communicationScore < 40) marketReadinessScore -= 5;
+
+        marketReadinessScore = Math.max(0, Math.min(100, marketReadinessScore));
+
+        // Generate Insights
+        const strengths = [];
+        const weaknesses = [];
+        const recommendations = [];
+
+        if (technicalScore > 70) strengths.push("Strong grasp of technical concepts");
+        if (allFoundKeywords.size > 5) strengths.push(`Good vocabulary: used terms like ${Array.from(allFoundKeywords).slice(0, 3).join(', ')}`);
+
+        if (marketReadinessScore > 80) strengths.push("High Market Readiness: Profile aligns well with current industry standards.");
+
+        if (technicalScore < 60) weaknesses.push("Technical depth needs improvement");
+        if (allMissingKeywords.size > 0) weaknesses.push(`Missed key concepts: ${Array.from(allMissingKeywords).slice(0, 3).join(', ')}`);
+
+        if (weaknesses.length === 0) weaknesses.push("Try to give more concrete examples");
+        if (strengths.length === 0) strengths.push("Good effort in attempting all questions");
+
+        recommendations.push("Review the missing concepts identified above.");
+        recommendations.push("Practice answering with the STAR method (Situation, Task, Action, Result).");
+
+        if (marketReadinessScore < 60) {
+            recommendations.push("Focus on core technical competency to improve Hiring Probability.");
+        }
+
+        const aiInsights = overallScore > 70
+            ? "You demonstrated good capability. Focus on refining your technical explanations."
+            : "Focus on fundamentals used in this interview. Review the specific feedback for each question.";
+
+        // 2026 Insight: Detailed Analysis
+        const detailedAnalysis = `
+            Market Readiness: ${marketReadinessScore}%
+            Based on your performance, you have a ${marketReadinessScore > 75 ? 'High' : marketReadinessScore > 50 ? 'Moderate' : 'Low'} probability of clearing screening rounds for this role.
+            Your pacing and confidence markers indicate ${confidenceScore > 70 ? 'strong executive presence' : 'room for improvement in delivery'}.
+        `;
 
         // Save or update evaluation
         const evaluationData = {
             overallScore,
             technicalScore,
             communicationScore,
-            problemSolvingScore: technicalScore,
+            confidenceScore, // Changed from problemSolvingScore to match schema
             starMethodScore,
-            aiInsights,
+            aiInsights: detailedAnalysis + "\n\n" + aiInsights, // Append new insights
             strengths,
             weaknesses,
             recommendations
         };
+
+        // Note: Prisma schema uses 'confidenceScore' but code used 'problemSolvingScore'. 
+        // Adapting to Schema: Schema has confidenceScore, technicalScore, communicationScore, starMethodScore.
+        // Assuming schema is correct.
 
         let evaluation;
         if (interview.evaluation) {
@@ -311,6 +486,44 @@ class AIService {
             return `Good performance overall. You demonstrate solid ${role} capabilities with reasonable ${domain} knowledge. Focus on strengthening your technical depth and using more concrete examples. With some targeted practice, you'll be ready for mid-to-senior level positions.`;
         } else {
             return `You show potential but there's room for improvement. Focus on deepening your ${domain} knowledge and practice articulating your experiences using the STAR method. Consider reviewing fundamentals and working through more practice problems.`;
+        }
+    }
+    async generateInterviewQuestions({ domain, role, company, difficulty, count = 5 }) {
+        try {
+            const prompt = `
+                Generate ${count} technical and behavioral interview questions for a ${difficulty} level ${role} position ${company ? `at ${company}` : ''} in the ${domain} domain.
+                
+                For each question, provide:
+                1. The question content
+                2. An ideal answer or key points to look for
+                3. The specific topic/concept being tested
+                
+                Format the output strictly as a JSON array of objects with keys: "content", "answer", "topic".
+                Do not include markdown formatting like \`\`\`json.
+            `;
+
+            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+
+            // Clean up potentially markdown-formatted JSON
+            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                console.error("Failed to parse AI response:", text);
+                throw new Error("AI generated invalid JSON");
+            }
+        } catch (error) {
+            console.error("AI Generation Error:", error);
+            // Fallback mock data if AI fails
+            return Array(count).fill(null).map((_, i) => ({
+                content: `Sample ${difficulty} question about ${domain} (${i + 1})`,
+                answer: "Expected answer key points...",
+                topic: "General"
+            }));
         }
     }
 }

@@ -48,7 +48,11 @@ interface KnowledgeEntry {
     domain: string
     topic: string
     content: string
+    answer?: string
     difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
+    type?: 'TECHNICAL' | 'BEHAVIORAL' | 'HR' | 'CODING'
+    codeSnippet?: string
+    tags?: any
     createdAt: string
 }
 
@@ -58,29 +62,16 @@ const SAMPLE_ENTRIES: KnowledgeEntry[] = [
         domain: 'IT',
         topic: 'JavaScript Closures',
         content: 'Explain what closures are in JavaScript and provide an example of their practical use.',
+        answer: 'A closure is the combination of a function bundled together (enclosed) with references to its surrounding state (the lexical environment).',
         difficulty: 'INTERMEDIATE',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: '2',
-        domain: 'IT',
-        topic: 'React Hooks',
-        content: 'What are React Hooks? Explain useState and useEffect with examples.',
-        difficulty: 'BEGINNER',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: '3',
-        domain: 'IT',
-        topic: 'System Design',
-        content: 'Design a scalable notification system for a social media platform.',
-        difficulty: 'ADVANCED',
+        type: 'TECHNICAL',
         createdAt: new Date().toISOString()
     }
 ]
 
 export default function QuestionsPage() {
-    const [entries, setEntries] = useState<KnowledgeEntry[]>(SAMPLE_ENTRIES)
+    const [entries, setEntries] = useState<KnowledgeEntry[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingEntry, setEditingEntry] = useState<KnowledgeEntry | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
@@ -91,33 +82,111 @@ export default function QuestionsPage() {
         domain: string
         topic: string
         content: string
+        answer: string
         difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
+        type: 'TECHNICAL' | 'BEHAVIORAL' | 'HR' | 'CODING'
+        codeSnippet: string
+        tags: string
     }>({
         domain: 'IT',
         topic: '',
         content: '',
-        difficulty: 'INTERMEDIATE'
+        answer: '',
+        difficulty: 'INTERMEDIATE',
+        type: 'TECHNICAL',
+        codeSnippet: '',
+        tags: ''
     })
 
-    const handleSubmit = async () => {
-        if (editingEntry) {
-            setEntries(prev => prev.map(e =>
-                e.id === editingEntry.id
-                    ? { ...e, ...formData }
-                    : e
-            ))
-        } else {
-            const newEntry: KnowledgeEntry = {
-                id: Date.now().toString(),
-                ...formData,
-                createdAt: new Date().toISOString()
-            }
-            setEntries(prev => [...prev, newEntry])
-        }
+    useEffect(() => {
+        fetchEntries()
+    }, [filterDomain, filterDifficulty, searchQuery]) // Re-fetch when filters change (or use client-side filtering)
 
-        setIsDialogOpen(false)
-        setEditingEntry(null)
-        setFormData({ domain: 'IT', topic: '', content: '', difficulty: 'INTERMEDIATE' })
+    const fetchEntries = async () => {
+        try {
+            setIsLoading(true)
+            const { knowledgeBaseApi } = await import('@/lib/api')
+            const res = await knowledgeBaseApi.getAll({
+                domain: filterDomain !== 'all' ? filterDomain : undefined,
+                difficulty: filterDifficulty !== 'all' ? filterDifficulty : undefined,
+                search: searchQuery || undefined
+            })
+            setEntries(res.data.entries)
+        } catch (error) {
+            console.error('Failed to fetch entries:', error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const [isGenerating, setIsGenerating] = useState(false)
+    const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([])
+    const [isAiDialogOpen, setIsAiDialogOpen] = useState(false)
+    const [aiParams, setAiParams] = useState({
+        domain: 'IT',
+        role: 'Frontend Developer',
+        difficulty: 'INTERMEDIATE',
+        count: 5,
+        company: ''
+    })
+
+    const handleGenerate = async () => {
+        setIsGenerating(true)
+        try {
+            const { knowledgeBaseApi } = await import('@/lib/api')
+            const res = await knowledgeBaseApi.generate(aiParams)
+            setGeneratedQuestions(res.data.questions)
+        } catch (error) {
+            console.error('Generation failed:', error)
+            alert('Failed to generate questions')
+        } finally {
+            setIsGenerating(false)
+        }
+    }
+
+    const saveGeneratedQuestion = async (q: any, index: number) => {
+        try {
+            const { knowledgeBaseApi } = await import('@/lib/api')
+            await knowledgeBaseApi.create({
+                domain: aiParams.domain,
+                topic: q.topic,
+                content: q.content,
+                difficulty: aiParams.difficulty,
+                answer: q.answer
+            })
+            // Remove from list
+            setGeneratedQuestions(prev => prev.filter((_, i) => i !== index))
+            fetchEntries()
+        } catch (error) {
+            console.error('Failed to save generated question:', error)
+        }
+    }
+
+    const handleSubmit = async () => {
+        try {
+            const { knowledgeBaseApi } = await import('@/lib/api')
+            if (editingEntry) {
+                await knowledgeBaseApi.update(editingEntry.id, formData)
+            } else {
+                await knowledgeBaseApi.create(formData)
+            }
+            fetchEntries() // Refresh list
+            setIsDialogOpen(false)
+            setEditingEntry(null)
+            setFormData({
+                domain: 'IT',
+                topic: '',
+                content: '',
+                answer: '',
+                difficulty: 'INTERMEDIATE',
+                type: 'TECHNICAL',
+                codeSnippet: '',
+                tags: ''
+            })
+        } catch (error) {
+            console.error('Failed to save entry:', error)
+            alert('Failed to save entry')
+        }
     }
 
     const handleEdit = (entry: KnowledgeEntry) => {
@@ -126,24 +195,30 @@ export default function QuestionsPage() {
             domain: entry.domain,
             topic: entry.topic,
             content: entry.content,
-            difficulty: entry.difficulty
+            answer: entry.answer || '',
+            difficulty: entry.difficulty,
+            type: entry.type || 'TECHNICAL',
+            codeSnippet: entry.codeSnippet || '',
+            tags: Array.isArray(entry.tags) ? entry.tags.join(', ') : ''
         })
         setIsDialogOpen(true)
     }
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('Are you sure you want to delete this Q&A entry?')) {
-            setEntries(prev => prev.filter(e => e.id !== id))
+            try {
+                const { knowledgeBaseApi } = await import('@/lib/api')
+                await knowledgeBaseApi.delete(id)
+                fetchEntries()
+            } catch (error) {
+                console.error('Failed to delete entry:', error)
+            }
         }
     }
 
-    const filteredEntries = entries.filter(entry => {
-        const matchesSearch = entry.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            entry.content.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesDomain = filterDomain === 'all' || entry.domain === filterDomain
-        const matchesDifficulty = filterDifficulty === 'all' || entry.difficulty === filterDifficulty
-        return matchesSearch && matchesDomain && matchesDifficulty
-    })
+    // Client-side filtering is redundant if API handles it, but kept for speed if small dataset
+    // We already fetch filtered data, so we can just use 'entries'
+    const filteredEntries = entries;
 
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty) {
@@ -170,7 +245,19 @@ export default function QuestionsPage() {
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button onClick={() => { setEditingEntry(null); setFormData({ domain: 'IT', topic: '', content: '', difficulty: 'INTERMEDIATE' }) }}>
+                        <Button onClick={() => {
+                            setEditingEntry(null);
+                            setFormData({
+                                domain: 'IT',
+                                topic: '',
+                                content: '',
+                                answer: '',
+                                difficulty: 'INTERMEDIATE',
+                                type: 'TECHNICAL',
+                                codeSnippet: '',
+                                tags: ''
+                            })
+                        }}>
                             <Plus className="mr-2 h-4 w-4" />
                             Add Q&A Entry
                         </Button>
@@ -203,6 +290,26 @@ export default function QuestionsPage() {
                                     </Select>
                                 </div>
                                 <div className="grid gap-2">
+                                    <Label htmlFor="type">Question Type</Label>
+                                    <Select
+                                        value={formData.type}
+                                        onValueChange={(value: any) => setFormData(f => ({ ...f, type: value }))}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="TECHNICAL">Technical</SelectItem>
+                                            <SelectItem value="BEHAVIORAL">Behavioral</SelectItem>
+                                            <SelectItem value="HR">HR</SelectItem>
+                                            <SelectItem value="CODING">Coding Challenge</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
                                     <Label htmlFor="difficulty">Difficulty</Label>
                                     <Select
                                         value={formData.difficulty}
@@ -218,24 +325,60 @@ export default function QuestionsPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="topic">Topic</Label>
+                                    <Input
+                                        id="topic"
+                                        value={formData.topic}
+                                        onChange={(e) => setFormData(f => ({ ...f, topic: e.target.value }))}
+                                        placeholder="e.g., JavaScript Closures"
+                                    />
+                                </div>
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="topic">Topic</Label>
-                                <Input
-                                    id="topic"
-                                    value={formData.topic}
-                                    onChange={(e) => setFormData(f => ({ ...f, topic: e.target.value }))}
-                                    placeholder="e.g., JavaScript Closures"
-                                />
-                            </div>
+
                             <div className="grid gap-2">
                                 <Label htmlFor="content">Question / Content</Label>
                                 <Textarea
                                     id="content"
                                     value={formData.content}
                                     onChange={(e) => setFormData(f => ({ ...f, content: e.target.value }))}
-                                    placeholder="Enter the interview question or knowledge content..."
+                                    placeholder="Enter the interview question..."
+                                    rows={3}
+                                />
+                            </div>
+
+                            {formData.type === 'CODING' && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="codeSnippet">Starting Code / Snippet</Label>
+                                    <Textarea
+                                        id="codeSnippet"
+                                        value={formData.codeSnippet}
+                                        onChange={(e) => setFormData(f => ({ ...f, codeSnippet: e.target.value }))}
+                                        placeholder="function example() { ... }"
+                                        className="font-mono text-sm"
+                                        rows={4}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="answer">Ideal Answer / Key Points</Label>
+                                <Textarea
+                                    id="answer"
+                                    value={formData.answer}
+                                    onChange={(e) => setFormData(f => ({ ...f, answer: e.target.value }))}
+                                    placeholder="Key points or full answer used for scoring..."
                                     rows={4}
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="tags">Tags (Comma separated)</Label>
+                                <Input
+                                    id="tags"
+                                    value={formData.tags}
+                                    onChange={(e) => setFormData(f => ({ ...f, tags: e.target.value }))}
+                                    placeholder="react, hooks, basics"
                                 />
                             </div>
                         </div>
@@ -245,6 +388,116 @@ export default function QuestionsPage() {
                                 {editingEntry ? 'Update' : 'Add to Knowledge Base'}
                             </Button>
                         </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* AI Generator Modal */}
+                <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" className="ml-2 gap-2 border-primary/20 bg-primary/5 hover:bg-primary/10">
+                            <BookOpen className="h-4 w-4 text-purple-600" />
+                            Generate with AI
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>AI Question Generator</DialogTitle>
+                            <DialogDescription>
+                                Auto-generate interview questions based on your criteria.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {!generatedQuestions.length ? (
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Domain</Label>
+                                        <Select value={aiParams.domain} onValueChange={v => setAiParams(p => ({ ...p, domain: v }))}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="IT">IT / Software</SelectItem>
+                                                <SelectItem value="Finance">Finance</SelectItem>
+                                                <SelectItem value="Marketing">Marketing</SelectItem>
+                                                <SelectItem value="HR">HR</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Difficulty</Label>
+                                        <Select value={aiParams.difficulty} onValueChange={v => setAiParams(p => ({ ...p, difficulty: v }))}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="BEGINNER">Beginner</SelectItem>
+                                                <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
+                                                <SelectItem value="ADVANCED">Advanced</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Role / Job Title</Label>
+                                        <Input
+                                            value={aiParams.role}
+                                            onChange={e => setAiParams(p => ({ ...p, role: e.target.value }))}
+                                            placeholder="e.g. Senior React Dev"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Company Context (Optional)</Label>
+                                        <Input
+                                            value={aiParams.company}
+                                            onChange={e => setAiParams(p => ({ ...p, company: e.target.value }))}
+                                            placeholder="e.g. Google, Startup"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Number of Questions</Label>
+                                    <Select value={String(aiParams.count)} onValueChange={v => setAiParams(p => ({ ...p, count: Number(v) }))}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="3">3 Questions</SelectItem>
+                                            <SelectItem value="5">5 Questions</SelectItem>
+                                            <SelectItem value="10">10 Questions</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <Button onClick={handleGenerate} disabled={isGenerating} className="w-full mt-4">
+                                    {isGenerating ? <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> : <BookOpen className="mr-2 h-4 w-4" />}
+                                    Generate Questions
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="font-semibold text-lg">{generatedQuestions.length} Questions Generated</h3>
+                                    <Button variant="ghost" size="sm" onClick={() => setGeneratedQuestions([])}>Reset</Button>
+                                </div>
+                                <div className="space-y-4">
+                                    {generatedQuestions.map((q, i) => (
+                                        <Card key={i} className="bg-muted/30">
+                                            <CardHeader className="pb-2">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <CardTitle className="text-base font-medium">{q.topic}</CardTitle>
+                                                        <CardDescription className="text-xs mt-1">{aiParams.difficulty}</CardDescription>
+                                                    </div>
+                                                    <Button size="sm" onClick={() => saveGeneratedQuestion(q, i)}>Save</Button>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent className="text-sm space-y-2">
+                                                <p className="font-medium">{q.content}</p>
+                                                <div className="bg-background p-2 rounded text-muted-foreground text-xs">
+                                                    <span className="font-semibold text-primary">Ideal Answer: </span>
+                                                    {q.answer}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </DialogContent>
                 </Dialog>
             </div>

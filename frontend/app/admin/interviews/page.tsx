@@ -21,10 +21,6 @@ export default function InterviewsPage() {
                         <BrainCircuit className="mr-2 h-4 w-4" />
                         AI Settings
                     </Button>
-                    <Button>
-                        <Calendar className="mr-2 h-4 w-4" />
-                        Schedule Interview
-                    </Button>
                 </div>
             </div>
 
@@ -94,12 +90,11 @@ export default function InterviewsPage() {
                             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                 <h3 className="text-lg font-medium">No live interviews scheduled</h3>
-                                <Button variant="link">Schedule Now</Button>
                             </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
             </Tabs>
-        </div>
+        </div >
     )
 }

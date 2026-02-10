@@ -442,9 +442,13 @@ export default function CourseDetailClient() {
                             </div>
 
                             {course.isEnrolled ? (
-                                <Button className="w-full mb-4" size="lg">
+                                <Button
+                                    className="w-full mb-4 shadow-lg shadow-primary/25"
+                                    size="lg"
+                                    onClick={() => router.push(`/courses/${course.id}/learn`)}
+                                >
                                     <PlayCircle className="mr-2 h-5 w-5" />
-                                    Continue Learning
+                                    Start Learning
                                 </Button>
                             ) : (
                                 <Button

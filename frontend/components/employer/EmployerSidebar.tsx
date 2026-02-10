@@ -10,7 +10,8 @@ import {
     BarChart3,
     LogOut,
     PlusCircle,
-    Building2
+    Building2,
+    Users
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -27,12 +28,17 @@ const sidebarItems = [
         icon: Briefcase,
     },
     {
+        title: "Candidates",
+        href: "/employer/candidates",
+        icon: Users,
+    },
+    {
         title: "Interviews",
         href: "/employer/interviews",
         icon: Video,
     },
     {
-        title: "Reports",
+        title: "Analytics",
         href: "/employer/reports",
         icon: BarChart3,
     },

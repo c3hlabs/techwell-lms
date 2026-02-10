@@ -71,6 +71,8 @@ app.use('/api/tickets', require('./routes/tickets.routes'));
 app.use('/api/live-classes', require('./routes/live-classes.routes'));
 app.use('/api/blogs', require('./routes/blog.routes'));
 app.use('/api/ats', require('./routes/ats.routes'));
+app.use('/api/ai-settings', require('./routes/ai-settings.routes'));
+app.use('/api/trainer', require('./routes/trainer.routes'));
 
 
 // Serve Static Uploads

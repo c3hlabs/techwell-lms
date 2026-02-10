@@ -23,43 +23,36 @@ export default function CertificatePage() {
 
     const courseId = params.id as string
 
-    interface Enrollment {
+    interface Certificate {
         id: string
-        completedAt?: string
-        course: {
-            id: string
-            title: string
-        }
+        uniqueId: string
+        studentName: string
+        courseName: string
+        issueDate: string
+        signatoryName?: string
+        signatoryTitle?: string
+        signatureUrl?: string
     }
-    const [enrollment, setEnrollment] = React.useState<Enrollment | null>(null)
+    const [certificate, setCertificate] = React.useState<Certificate | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
 
     React.useEffect(() => {
-        const fetchCertificateData = async () => {
+        const fetchCertificate = async () => {
             try {
-                // Determine if we look up by courseId or enrollmentId
-                // Let's assume URL is /certificate/[courseId]
-                // We fetch "my enrollment" for this course.
-
-                // Since we don't have a direct "get enrollment by course id", 
-                // we iterate "my enrolled".
-                const res = await api.get('/courses/my/enrolled')
-                const found = res.data.enrollments.find((e: Enrollment) => e.course.id === courseId)
-
-                if (found) {
-                    setEnrollment(found)
-                } else {
-                    // Fallback for "Mock" certificates from dashboard if not really enrolled/completed
-                    // Just show dummy data if testing
-                }
+                // Determine if ID is existing DB ID or needs verification
+                // Since this page handles /certificate/[id], we assume ID.
+                const res = await api.get(`/certificates/${params.id}`)
+                setCertificate(res.data.certificate)
             } catch (error) {
                 console.error("Certificate fetch error", error)
             } finally {
                 setIsLoading(false)
             }
         }
-        fetchCertificateData()
-    }, [courseId])
+        if (params.id) {
+            fetchCertificate()
+        }
+    }, [params.id])
 
     const handlePrint = () => {
         window.print()
@@ -67,11 +60,14 @@ export default function CertificatePage() {
 
     if (isLoading) return <div className="flex justify-center p-20"><Loader2 className="animate-spin" /></div>
 
-    // Mock data if enrollment not found (for demonstration of the UI)
-    const courseName = enrollment?.course?.title || "Mastering Artificial Intelligence"
-    const studentName = user?.name || "John Doe"
-    const date = enrollment?.completedAt ? new Date(enrollment.completedAt).toLocaleDateString() : new Date().toLocaleDateString()
-    const certificateId = enrollment?.id || "CERT-MOCK-123456"
+    if (!certificate) return <div className="text-center p-20">Certificate not found.</div>
+
+    const courseName = certificate.courseName
+    const studentName = certificate.studentName
+    const date = new Date(certificate.issueDate).toLocaleDateString()
+    const certificateId = certificate.uniqueId
+    const signatoryName = certificate.signatoryName || "Director"
+    const signatoryTitle = certificate.signatoryTitle || "Academic Director"
 
     return (
         <div className="min-h-screen bg-neutral-100 flex flex-col items-center py-10 print:bg-white print:p-0">
@@ -135,7 +131,8 @@ export default function CertificatePage() {
                         <div className="text-right">
                             {/* Signature Line */}
                             <div className="border-b border-neutral-400 w-32 mb-1"></div>
-                            <p className="text-xs text-neutral-400 uppercase tracking-wider">Director</p>
+                            <p className="text-xs text-neutral-400 uppercase tracking-wider">{signatoryName}</p>
+                            <p className="text-[10px] text-neutral-400 uppercase tracking-wider">{signatoryTitle}</p>
                         </div>
                     </div>
                 </div>

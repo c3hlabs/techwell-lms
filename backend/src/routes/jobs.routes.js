@@ -140,9 +140,53 @@ router.get('/:id/applications', authenticate, authorize('EMPLOYER'), async (req,
 
         const applications = await prisma.jobApplication.findMany({
             where: { jobId: req.params.id },
-            include: { applicant: { select: { name: true, email: true, avatar: true, phone: true } } }
+            include: {
+                applicant: {
+                    select: {
+                        name: true,
+                        email: true,
+                        avatar: true,
+                        phone: true,
+                        interviews: {
+                            select: {
+                                evaluation: {
+                                    select: { overallScore: true, starMethodScore: true }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         });
-        res.json(applications);
+
+        // Add calculated scores to response
+        const enhancedApplications = applications.map(app => {
+            const interviews = app.applicant?.interviews || [];
+            let avgScore = 0;
+            let avgStar = 0;
+
+            if (interviews.length > 0) {
+                const evaluatedInterviews = interviews.filter(i => i.evaluation);
+                if (evaluatedInterviews.length > 0) {
+                    const totalScore = evaluatedInterviews.reduce((sum, i) => sum + (i.evaluation.overallScore || 0), 0);
+                    const totalStar = evaluatedInterviews.reduce((sum, i) => sum + (i.evaluation.starMethodScore || 0), 0);
+                    avgScore = Math.round(totalScore / evaluatedInterviews.length);
+                    avgStar = Math.round(totalStar / evaluatedInterviews.length);
+                }
+            }
+
+            return {
+                ...app,
+                applicant: {
+                    ...app.applicant,
+                    aiScore: avgScore,
+                    starScore: avgStar,
+                    interviews: undefined // Hide raw data to keep response clean
+                }
+            };
+        });
+
+        res.json(enhancedApplications);
     } catch (error) {
         next(error);
     }

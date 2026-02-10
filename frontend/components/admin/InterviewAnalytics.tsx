@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import api from "@/lib/api"
 import { Loader2 } from "lucide-react"
 
@@ -104,9 +105,7 @@ export function InterviewAnalytics() {
                                             <span className="text-sm font-medium">{w.tag}</span>
                                             <span className="text-sm text-muted-foreground">{w.count} times</span>
                                         </div>
-                                        <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                                            <div className="h-full bg-red-500" style={{ width: `${Math.min((w.count / data.totalInterviews) * 100, 100)}%` }} />
-                                        </div>
+                                        <Progress value={Math.min((w.count / data.totalInterviews) * 100, 100)} className="h-2 [&>div]:bg-red-500" />
                                     </div>
                                 </div>
                             ))}
@@ -124,6 +123,21 @@ export function InterviewAnalytics() {
                         <div className="text-center py-8">
                             <div className="text-5xl font-bold mb-2">{data.totalInterviews}</div>
                             <p className="text-muted-foreground">Total Sessions Completed</p>
+                        </div>
+
+                        {/* 2026 Feature: Market Readiness Estimate */}
+                        <div className="mt-8 border-t pt-6">
+                            <h4 className="text-sm font-semibold mb-4 text-center">Market Readiness Score</h4>
+                            <div className="relative h-4 bg-secondary rounded-full overflow-hidden w-3/4 mx-auto">
+                                <div
+                                    className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500"
+                                    style={{ width: `${Math.min(data.radar ? (data.radar.tech * 0.5 + data.radar.comm * 0.3 + data.radar.conf * 0.2) : 0, 100)}%` }}
+                                />
+                            </div>
+                            <div className="flex justify-between text-xs text-muted-foreground mt-2 w-3/4 mx-auto">
+                                <span>Needs Work</span>
+                                <span>Ready to Hire</span>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

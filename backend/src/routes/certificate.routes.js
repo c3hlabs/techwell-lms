@@ -137,9 +137,9 @@ router.get('/:id', authenticate, async (req, res, next) => {
 /**
  * @route   POST /api/certificates/generate
  * @desc    Generate certificate for course completion
- * @access  Private/Admin
+ * @access  Private
  */
-router.post('/generate', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+router.post('/generate', authenticate, async (req, res, next) => {
     try {
         const { userId, courseId, enrollmentId, grade, score } = req.body;
 
@@ -152,6 +152,21 @@ router.post('/generate', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async 
 
         if (!user || !course) {
             return res.status(404).json({ error: 'User or Course not found' });
+        }
+
+        let certificateEnrollmentId = enrollmentId;
+
+        // Verify Course Completion (Security Check)
+        if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN') {
+            // 1. Verify Enrollment
+            const enrollment = await prisma.enrollment.findUnique({
+                where: { userId_courseId: { userId: req.user.id, courseId } }
+            });
+
+            if (!enrollment || enrollment.status !== 'COMPLETED') {
+                return res.status(403).json({ error: 'Course not completed. Cannot claim certificate.' });
+            }
+            certificateEnrollmentId = enrollment.id;
         }
 
         // Check if certificate already exists
@@ -187,7 +202,7 @@ router.post('/generate', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async 
                 uniqueId,
                 userId,
                 courseId,
-                enrollmentId,
+                enrollmentId: certificateEnrollmentId,
                 studentName: user.name,
                 courseName: course.title,
                 courseCategory: course.category,

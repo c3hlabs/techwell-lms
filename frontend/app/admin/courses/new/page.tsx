@@ -38,13 +38,20 @@ export default function CreateCoursePage() {
 
     // Step 2 Data (Curriculum)
     interface Lesson {
+        id?: string
         title: string
+        type: 'VIDEO' | 'TEXT' | 'QUIZ' | 'ASSIGNMENT' | 'PDF'
         duration: number
         videoUrl?: string
+        content?: string
+        isPublished: boolean
     }
     interface Module {
+        id?: string
         title: string
         description: string
+        orderIndex: number
+        isPublished: boolean
         lessons: Lesson[]
     }
     const [modules, setModules] = React.useState<Module[]>([])
@@ -178,6 +185,7 @@ export default function CreateCoursePage() {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Category</label>
                                     <select
+                                        aria-label="Course Category"
                                         className="w-full p-2 border rounded-md bg-background"
                                         value={basicData.category}
                                         onChange={e => setBasicData({ ...basicData, category: e.target.value })}
@@ -191,6 +199,7 @@ export default function CreateCoursePage() {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Difficulty</label>
                                     <select
+                                        aria-label="Course Difficulty"
                                         className="w-full p-2 border rounded-md bg-background"
                                         value={basicData.difficulty}
                                         onChange={e => setBasicData({ ...basicData, difficulty: e.target.value })}
@@ -284,6 +293,7 @@ export default function CreateCoursePage() {
                                     </div>
                                     <button
                                         type="button"
+                                        aria-label="Toggle Interview Prep"
                                         onClick={() => setBasicData({ ...basicData, hasInterviewPrep: !basicData.hasInterviewPrep })}
                                         className={`w-12 h-6 rounded-full transition-colors ${basicData.hasInterviewPrep ? 'bg-primary' : 'bg-muted'
                                             } relative`}
@@ -382,28 +392,108 @@ export default function CreateCoursePage() {
                                                 </div>
                                                 <Badge variant="secondary">{mod.lessons.length} Lessons</Badge>
                                             </div>
-                                            {/* Lessons */}
                                             <div className="pl-8 space-y-4 border-l-2 ml-2">
-                                                {mod.lessons.map((lesson: { title: string, duration: number, videoUrl?: string }, lIdx: number) => (
+                                                {mod.lessons.map((lesson, lIdx) => (
                                                     <div key={lIdx} className="p-4 bg-muted/30 rounded border space-y-3">
                                                         <div className="flex items-center justify-between">
-                                                            <div className="font-medium text-sm">Lesson {lIdx + 1}: {lesson.title}</div>
-                                                            <span className="text-xs text-muted-foreground">{Math.round(lesson.duration / 60)} min</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-medium text-sm">Lesson {lIdx + 1}: {lesson.title}</span>
+                                                                <Badge variant="outline" className="text-[10px]">{lesson.type}</Badge>
+                                                                <Badge variant={lesson.isPublished ? 'default' : 'secondary'} className="text-[10px]">
+                                                                    {lesson.isPublished ? 'Published' : 'Draft'}
+                                                                </Badge>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs text-muted-foreground">{Math.round(lesson.duration / 60)} min</span>
+                                                                {/* Simple Toggle for Publish */}
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        const newModules = [...modules]
+                                                                        newModules[idx].lessons[lIdx].isPublished = !lesson.isPublished
+                                                                        setModules(newModules)
+                                                                    }}
+                                                                >
+                                                                    {lesson.isPublished ? 'Unpublish' : 'Publish'}
+                                                                </Button>
+                                                            </div>
                                                         </div>
 
-                                                        {/* Video Uploader for Lesson */}
-                                                        <div className="bg-background rounded p-2">
-                                                            <VideoUpload
-                                                                label={`Video for: ${lesson.title}`}
-                                                                initialUrl={lesson.videoUrl}
-                                                                onUploadComplete={(url) => {
-                                                                    // Update lesson videoUrl in state
-                                                                    const newModules = [...modules]
-                                                                    newModules[idx].lessons[lIdx].videoUrl = url
-                                                                    setModules(newModules)
-                                                                }}
-                                                            />
+                                                        {/* Type & Content Editor */}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="text-xs font-medium">Type</label>
+                                                                <select
+                                                                    aria-label="Lesson Type"
+                                                                    className="w-full p-2 h-9 text-sm border rounded bg-background"
+                                                                    value={lesson.type}
+                                                                    onChange={(e) => {
+                                                                        const newModules = [...modules]
+                                                                        newModules[idx].lessons[lIdx].type = e.target.value as any
+                                                                        setModules(newModules)
+                                                                    }}
+                                                                >
+                                                                    <option value="VIDEO">Video Lesson</option>
+                                                                    <option value="TEXT">Text / Article</option>
+                                                                    <option value="PDF">PDF Resource</option>
+                                                                    <option value="QUIZ">Quiz / Test</option>
+                                                                    <option value="ASSIGNMENT">Assignment</option>
+                                                                </select>
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-xs font-medium">Duration (sec)</label>
+                                                                <Input
+                                                                    type="number"
+                                                                    className="h-9"
+                                                                    value={lesson.duration}
+                                                                    onChange={(e) => {
+                                                                        const newModules = [...modules]
+                                                                        newModules[idx].lessons[lIdx].duration = Number(e.target.value)
+                                                                        setModules(newModules)
+                                                                    }}
+                                                                />
+                                                            </div>
                                                         </div>
+
+                                                        {/* Dynamic Content Input based on Type */}
+                                                        {lesson.type === 'VIDEO' && (
+                                                            <div className="bg-background rounded p-2 border">
+                                                                <VideoUpload
+                                                                    label={`Video Source`}
+                                                                    initialUrl={lesson.videoUrl}
+                                                                    onUploadComplete={(url) => {
+                                                                        const newModules = [...modules]
+                                                                        newModules[idx].lessons[lIdx].videoUrl = url
+                                                                        setModules(newModules)
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
+
+                                                        {(lesson.type === 'TEXT' || lesson.type === 'PDF' || lesson.type === 'ASSIGNMENT') && (
+                                                            <div className="space-y-2">
+                                                                <label className="text-xs font-medium">
+                                                                    {lesson.type === 'PDF' ? 'PDF URL' : 'Content / Instructions'}
+                                                                </label>
+                                                                <Textarea
+                                                                    className="min-h-[100px]"
+                                                                    placeholder={lesson.type === 'PDF' ? 'Paste PDF link here...' : 'Write content details...'}
+                                                                    value={lesson.content || ''}
+                                                                    onChange={(e) => {
+                                                                        const newModules = [...modules]
+                                                                        newModules[idx].lessons[lIdx].content = e.target.value
+                                                                        setModules(newModules)
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        )}
+
+                                                        {lesson.type === 'QUIZ' && (
+                                                            <div className="p-3 bg-yellow-50 text-yellow-800 text-xs rounded border border-yellow-200">
+                                                                Quiz configuration is handled in the dedicated Quiz Builder after saving.
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>

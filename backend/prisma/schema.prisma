@@ -55,6 +55,12 @@ model User {
   createdTasks       Task[]            @relation("CreatedBy")
   blogPosts          BlogPost[]
   taskComments       TaskComment[]
+  assignmentSubmissions AssignmentSubmission[]
+  lessonComments     LessonComment[]
+
+  // Trainer Portal
+  instructedBatches  Batch[]
+  announcements      Announcement[]
   
   // ATS Relations
   conductedJobInterviews JobInterview[]
@@ -112,10 +118,76 @@ model Course {
   reviews     Review[]
   liveClasses LiveClass[]
 
+  // Trainer Portal Relations
+  batches       Batch[]
+  announcements Announcement[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([title, instructorId])
+}
+
+// ============= TRAINER PORTAL: BATCHES =============
+
+model Batch {
+  id           String   @id @default(cuid())
+  name         String
+  courseId     String
+  instructorId String
+
+  startDate    DateTime?
+  endDate      DateTime?
+  description  String?
+  maxStudents  Int?
+
+  // Relations
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  instructor   User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  announcements Announcement[]
+  enrollments   Enrollment[] // Students in this batch
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Announcement {
+  id           String   @id @default(cuid())
+  title        String
+  content      String   @db.Text
+  priority     String   @default("NORMAL") // NORMAL, URGENT
+
+  courseId     String?
+  batchId      String?
+  instructorId String
+
+  // Relations
+  course       Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  batch        Batch?   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  instructor   User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model LessonComment {
+  id        String   @id @default(cuid())
+  lessonId  String
+  userId    String
+  content   String   @db.Text
+  
+  parentId  String?  // For replies
+  isPinned  Boolean  @default(false)
+  isInstructorResponse Boolean @default(false)
+
+  // Relations
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    LessonComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   LessonComment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Difficulty {
@@ -143,7 +215,8 @@ model Module {
   title       String
   description String?
   orderIndex  Int
-
+  isPublished Boolean @default(false)
+  
   // Relations
   course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons Lesson[]
@@ -154,6 +227,15 @@ model Module {
   @@unique([courseId, orderIndex])
 }
 
+enum LessonType {
+  VIDEO
+  TEXT
+  PDF
+  QUIZ
+  ASSIGNMENT
+  LIVE
+}
+
 model Lesson {
   id       String  @id @default(cuid())
   moduleId String
@@ -162,11 +244,21 @@ model Lesson {
   videoUrl String?
   duration Int? // in seconds
   order    Int
+  
+  type        LessonType @default(VIDEO)
+  isPublished Boolean    @default(false)
+  isPreview   Boolean    @default(false)
+  
+  // Configuration for Quizzes/Assignments
+  settings    Json?      // { timeLimit, passingScore, attemptsAllowed, maxFiles }
+  resources   Json?      // Array of { title, url, type }
 
   // Relations
   module   Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   quizzes  Quiz[]
   progress LessonProgress[]
+  comments LessonComment[]
+  assignmentSubmissions AssignmentSubmission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -179,11 +271,30 @@ model Quiz {
   options       Json // Array of options
   correctAnswer String
   explanation   String?
-
+  
   // Relations
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+}
+
+model AssignmentSubmission {
+  id        String   @id @default(cuid())
+  lessonId  String
+  userId    String
+  
+  content   String?  @db.Text
+  fileUrl   String?
+  
+  grade     Int?
+  feedback  String?  @db.Text
+  status    String   @default("PENDING") // PENDING, GRADED, REJECTED
+  
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Enrollment {
@@ -193,10 +304,12 @@ model Enrollment {
   progress           Int              @default(0) // percentage
   status             EnrollmentStatus @default(ACTIVE)
   hasInterviewAccess Boolean          @default(false) // Phase 19: Bundle Access
-
+  
+  batchId            String?
   // Relations
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  batch  Batch? @relation(fields: [batchId], references: [id])
 
   enrolledAt  DateTime  @default(now())
   completedAt DateTime?
@@ -216,6 +329,7 @@ model LessonProgress {
   userId         String
   lessonId       String
   completed      Boolean  @default(false)
+  score          Int?     // For Quizzes
   timeSpent      Int      @default(0) // in seconds
   lastAccessedAt DateTime @default(now())
 
@@ -297,6 +411,7 @@ enum QuestionType {
   BEHAVIORAL
   SITUATIONAL
   HR
+  CODING
 }
 
 model InterviewResponse {
@@ -305,6 +420,7 @@ model InterviewResponse {
   questionId  String @unique
 
   transcript String?
+  code       String? @db.Text // Candidate code submission
   videoUrl   String?
   audioUrl   String?
   duration   Int? // in seconds
@@ -358,11 +474,13 @@ model Avatar {
 model KnowledgeBase {
   id             String   @id @default(cuid())
   domain         String   // e.g., "Frontend", "Backend"
-  role           String?  // e.g., "React Developer"
-  question       String   @db.Text
-  beginnerAnswer String   @db.Text
-  mediumAnswer   String   @db.Text
-  hardAnswer     String   @db.Text
+  topic          String   // e.g., "React Hooks"
+  content        String   @db.Text // The Question
+  answer         String?  @db.Text // The Ideal Answer (for evaluation)
+  difficulty     Difficulty @default(INTERMEDIATE)
+  type           QuestionType @default(TECHNICAL) 
+  codeSnippet    String?  @db.Text // For coding questions
+  tags           Json?    // Array of strings
   
   status         KnowledgeStatus @default(PUBLISHED)
   createdAt      DateTime @default(now())

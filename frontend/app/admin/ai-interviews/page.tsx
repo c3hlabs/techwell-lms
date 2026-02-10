@@ -28,10 +28,34 @@ export default function AIInterviewsPage() {
         hrQuestionRatio: 3, // Every Nth question is HR
     })
 
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        loadSettings()
+    }, [])
+
+    const loadSettings = async () => {
+        try {
+            setIsLoading(true)
+            const { aiSettingsApi } = await import('@/lib/api') // Dynamic import to avoid circular dep if any
+            const res = await aiSettingsApi.get()
+            setSettings(res.data)
+        } catch (error) {
+            console.error('Failed to load settings:', error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     const handleSave = async () => {
-        // TODO: Call API to save settings
-        console.log('Saving settings:', settings)
-        alert('Settings saved successfully!')
+        try {
+            const { aiSettingsApi } = await import('@/lib/api')
+            await aiSettingsApi.update(settings)
+            alert('Settings saved successfully!')
+        } catch (error) {
+            console.error('Failed to save settings:', error)
+            alert('Failed to save settings')
+        }
     }
 
     return (

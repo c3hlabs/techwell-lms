@@ -60,6 +60,29 @@ async function main() {
         console.log('⏭️  Student exists');
     }
 
+    // Give Jane Pro access (interview access)
+    const existingProEnrollment = await prisma.enrollment.findFirst({
+        where: { userId: student.id, hasInterviewAccess: true }
+    });
+    if (!existingProEnrollment) {
+        // Find any course to enroll in
+        const anyCourse = await prisma.course.findFirst();
+        if (anyCourse) {
+            await prisma.enrollment.create({
+                data: {
+                    userId: student.id,
+                    courseId: anyCourse.id,
+                    hasInterviewAccess: true,
+                    status: 'ACTIVE'
+                }
+            });
+            console.log('✅ Gave Jane Pro interview access');
+        }
+    } else {
+        console.log('⏭️  Jane already has Pro access');
+    }
+
+
     // Create Courses
     const coursesData = [
         { title: 'Complete Web Development Bootcamp', description: 'Master HTML, CSS, JavaScript, React, Node.js and more.', category: 'WEB_DEV', difficulty: 'BEGINNER', duration: 40, price: 4999 },

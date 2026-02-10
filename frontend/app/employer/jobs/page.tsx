@@ -149,26 +149,53 @@ export default function EmployerJobsPage() {
                                         {new Date(job.createdAt).toLocaleDateString()}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-primary/10">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="glass-card border-muted/20 w-48">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => router.push(`/employer/jobs/${job.id}`)}>
-                                                    <Eye className="mr-2 h-4 w-4" /> View Applicants
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => router.push(`/employer/jobs/${job.id}/edit`)}>
-                                                    <Edit className="mr-2 h-4 w-4" /> Edit Details
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator className="bg-muted/20" />
-                                                <DropdownMenuItem className="text-red-600 focus:text-red-700 focus:bg-red-50">
-                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Listing
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="hidden md:flex h-8 border-primary/20 hover:bg-primary/5 hover:text-primary rounded-lg text-xs"
+                                                onClick={() => router.push(`/employer/jobs/${job.id}`)}
+                                            >
+                                                <Eye className="mr-2 h-3 w-3" /> View applicants
+                                            </Button>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-muted/50 data-[state=open]:bg-muted/50">
+                                                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-56 p-2 glass-card border-muted/20 shadow-xl rounded-xl">
+                                                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground px-2 py-1.5">Manage "{job.title}"</DropdownMenuLabel>
+                                                    <DropdownMenuItem
+                                                        onClick={() => router.push(`/employer/jobs/${job.id}`)}
+                                                        className="rounded-lg focus:bg-primary/10 focus:text-primary cursor-pointer px-2 py-2 mb-1 md:hidden"
+                                                    >
+                                                        <Eye className="mr-2 h-4 w-4" /> View Applicants
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => router.push(`/employer/jobs/${job.id}/edit`)}
+                                                        className="rounded-lg focus:bg-primary/10 focus:text-primary cursor-pointer px-2 py-2 mb-1"
+                                                    >
+                                                        <Edit className="mr-2 h-4 w-4" /> Edit Details
+                                                    </DropdownMenuItem>
+
+                                                    {/* Placeholder for future Close/Archive action */}
+                                                    <DropdownMenuItem
+                                                        disabled
+                                                        className="rounded-lg opacity-50 cursor-not-allowed px-2 py-2 mb-1"
+                                                    >
+                                                        <Briefcase className="mr-2 h-4 w-4" /> Close Job (Coming Soon)
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuSeparator className="bg-muted/20 my-1" />
+                                                    <DropdownMenuItem
+                                                        className="rounded-lg text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer px-2 py-2"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Listing
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}

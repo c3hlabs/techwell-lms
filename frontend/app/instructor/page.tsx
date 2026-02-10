@@ -11,40 +11,87 @@ import {
     CheckCircle2,
     Calendar,
     ArrowUpRight,
-    Search
+    AlertTriangle,
+    FileCheck,
+    Loader2
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import api from '@/lib/api'
+import Link from 'next/link'
 
 interface StatCardProps {
     icon: React.ElementType
     label: string
-    value: string
-    trend: string
+    value: string | number
+    trend?: string
     color: string
+    loading?: boolean
 }
 
-const StatCard = ({ icon: Icon, label, value, trend, color }: StatCardProps) => (
+const StatCard = ({ icon: Icon, label, value, trend, color, loading }: StatCardProps) => (
     <Card className="border-none shadow-sm bg-white overflow-hidden group hover:shadow-md transition-all duration-300">
         <CardContent className="p-6">
             <div className="flex items-center justify-between">
                 <div className={`p-3 rounded-2xl ${color} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className="h-6 w-6 text-white" />
                 </div>
-                <div className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">
-                    <TrendingUp className="h-3 w-3" />
-                    {trend}
-                </div>
+                {trend && (
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">
+                        <TrendingUp className="h-3 w-3" />
+                        {trend}
+                    </div>
+                )}
             </div>
             <div className="mt-4">
                 <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">{label}</p>
-                <p className="text-3xl font-black text-slate-800 mt-1">{value}</p>
+                {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin mt-2" />
+                ) : (
+                    <p className="text-3xl font-black text-slate-800 mt-1">{value}</p>
+                )}
             </div>
         </CardContent>
     </Card>
 )
 
+interface TrainerStats {
+    totalStudents: number
+    activeBatches: number
+    pendingEvaluations: number
+}
+
+interface Batch {
+    id: string
+    name: string
+    course: { title: string; thumbnail: string | null }
+    _count: { enrollments: number }
+}
+
 export default function InstructorDashboard() {
+    const [stats, setStats] = React.useState<TrainerStats | null>(null)
+    const [batches, setBatches] = React.useState<Batch[]>([])
+    const [loading, setLoading] = React.useState(true)
+
+    React.useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [statsRes, batchesRes] = await Promise.all([
+                    api.get('/trainer/stats'),
+                    api.get('/trainer/batches')
+                ])
+                setStats(statsRes.data)
+                setBatches(batchesRes.data)
+            } catch (error) {
+                console.error('Failed to fetch trainer data:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchData()
+    }, [])
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Stats Grid */}
@@ -52,23 +99,23 @@ export default function InstructorDashboard() {
                 <StatCard
                     icon={Users}
                     label="Total Students"
-                    value="1,280"
-                    trend="+12%"
+                    value={stats?.totalStudents ?? '-'}
                     color="bg-blue-600"
+                    loading={loading}
                 />
                 <StatCard
                     icon={BookOpen}
-                    label="Active Courses"
-                    value="15"
-                    trend="+2"
+                    label="Active Batches"
+                    value={stats?.activeBatches ?? '-'}
                     color="bg-purple-600"
+                    loading={loading}
                 />
                 <StatCard
-                    icon={Star}
-                    label="Avg Rating"
-                    value="4.9"
-                    trend="+0.2"
+                    icon={FileCheck}
+                    label="Pending Evaluations"
+                    value={stats?.pendingEvaluations ?? '-'}
                     color="bg-amber-500"
+                    loading={loading}
                 />
                 <StatCard
                     icon={CheckCircle2}
@@ -80,69 +127,95 @@ export default function InstructorDashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Recent Courses */}
+                {/* My Batches */}
                 <Card className="lg:col-span-2 border-none shadow-sm bg-white overflow-hidden">
                     <CardHeader className="p-8 pb-0">
                         <div className="flex items-center justify-between">
                             <div>
-                                <CardTitle className="text-xl font-black text-slate-800">Recent Courses</CardTitle>
-                                <CardDescription className="text-xs font-bold uppercase tracking-widest mt-1">Manage your active learning modules</CardDescription>
+                                <CardTitle className="text-xl font-black text-slate-800">My Batches</CardTitle>
+                                <CardDescription className="text-xs font-bold uppercase tracking-widest mt-1">
+                                    Active student groups
+                                </CardDescription>
                             </div>
-                            <Button variant="ghost" size="sm" className="text-primary font-bold hover:bg-primary/5">View All</Button>
+                            <Link href="/instructor/batches">
+                                <Button variant="ghost" size="sm" className="text-primary font-bold hover:bg-primary/5">
+                                    View All
+                                </Button>
+                            </Link>
                         </div>
                     </CardHeader>
                     <CardContent className="p-8">
-                        <div className="space-y-6">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="flex flex-col md:flex-row md:items-center gap-6 p-4 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all group">
-                                    <div className="h-24 w-40 rounded-xl bg-slate-200 overflow-hidden relative shadow-sm border border-slate-200">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent group-hover:opacity-100 transition-opacity" />
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button size="icon" className="rounded-full bg-white text-primary hover:bg-white hover:scale-110 shadow-xl transition-all">
-                                                <Play className="h-5 w-5 fill-current" />
-                                            </Button>
+                        {loading ? (
+                            <div className="flex items-center justify-center py-12">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : batches.length === 0 ? (
+                            <div className="text-center py-12 text-slate-500">
+                                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                <p className="font-medium">No batches assigned yet</p>
+                                <p className="text-sm mt-1">Create a batch to start managing students</p>
+                                <Link href="/instructor/batches">
+                                    <Button className="mt-4">Create Batch</Button>
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {batches.slice(0, 4).map((batch) => (
+                                    <div
+                                        key={batch.id}
+                                        className="flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all group"
+                                    >
+                                        <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                                            <Users className="h-7 w-7 text-primary" />
                                         </div>
-                                    </div>
-
-                                    <div className="flex-1 space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[9px] font-black uppercase border border-blue-100 tracking-tighter">Development</span>
-                                            <div className="h-1 w-1 rounded-full bg-slate-300" />
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Masterclass</span>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-slate-800">{batch.name}</h4>
+                                            <p className="text-sm text-slate-500">{batch.course.title}</p>
                                         </div>
-                                        <h4 className="font-black text-lg text-slate-800 leading-tight">Advanced Advanced Multi-Biz Architecture with Next.js 14</h4>
-                                        <div className="flex items-center gap-6 mt-2">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-tighter">
-                                                <Users className="h-3.5 w-3.5" />
-                                                428 Students
-                                            </div>
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-tighter">
-                                                <Clock className="h-3.5 w-3.5" />
-                                                12.5 Hours
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex md:flex-col items-center justify-between gap-4">
                                         <div className="text-right">
-                                            <p className="text-lg font-black text-slate-800">$199.00</p>
-                                            <p className="text-[10px] text-green-600 font-bold uppercase tracking-tighter">84 Sales today</p>
+                                            <Badge variant="secondary" className="font-bold">
+                                                {batch._count.enrollments} Students
+                                            </Badge>
                                         </div>
-                                        <Button variant="outline" size="sm" className="rounded-xl font-bold bg-white shadow-sm h-10 px-6">Manage</Button>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* Students Activity */}
+                {/* Quick Actions & Alerts */}
                 <div className="space-y-8">
+                    {/* Pending Evaluations Alert */}
+                    {stats && stats.pendingEvaluations > 0 && (
+                        <Card className="border-none shadow-sm bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+                            <CardContent className="p-6">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 rounded-2xl bg-amber-500 shadow-sm">
+                                        <AlertTriangle className="h-6 w-6 text-white" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-amber-900">Pending Evaluations</h3>
+                                        <p className="text-sm text-amber-700 mt-1">
+                                            You have {stats.pendingEvaluations} assignment{stats.pendingEvaluations > 1 ? 's' : ''} waiting for review.
+                                        </p>
+                                        <Link href="/instructor/assessments">
+                                            <Button size="sm" className="mt-3 bg-amber-600 hover:bg-amber-700">
+                                                Review Now
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Quick Stats */}
                     <Card className="border-none shadow-sm bg-white overflow-hidden">
-                        <CardHeader className="p-8">
-                            <CardTitle className="text-xl font-black text-slate-800">Quick Stats</CardTitle>
+                        <CardHeader className="p-6 pb-0">
+                            <CardTitle className="text-lg font-bold text-slate-800">Quick Stats</CardTitle>
                         </CardHeader>
-                        <CardContent className="px-8 pb-8 pt-0 space-y-6">
+                        <CardContent className="p-6 space-y-4">
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-slate-600">
                                     <span>Course Completion</span>
@@ -164,18 +237,21 @@ export default function InstructorDashboard() {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-none shadow-sm bg-white bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden relative">
+                    {/* Live Classes CTA */}
+                    <Card className="border-none shadow-sm bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden relative">
                         <div className="absolute top-0 right-0 p-8 opacity-10">
                             <TrendingUp className="h-32 w-32" />
                         </div>
-                        <CardContent className="p-8 relative z-10">
-                            <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 border border-white/10">
+                        <CardContent className="p-6 relative z-10">
+                            <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-4 border border-white/10">
                                 <Calendar className="h-6 w-6 text-white" />
                             </div>
-                            <h3 className="text-xl font-black mb-2 leading-tight">You have 4 live classes today!</h3>
-                            <p className="text-white/60 text-sm font-medium mb-6">Starting in 45 minutes. Be ready to share your expertise.</p>
-                            <Button className="w-full bg-white text-slate-900 font-black hover:bg-slate-100 rounded-2xl h-12 shadow-xl shadow-black/20">
-                                Join Now
+                            <h3 className="text-lg font-bold mb-2 leading-tight">Schedule a Live Class</h3>
+                            <p className="text-white/60 text-sm font-medium mb-4">
+                                Connect with your students in real-time.
+                            </p>
+                            <Button className="w-full bg-white text-slate-900 font-bold hover:bg-slate-100 rounded-xl h-10 shadow-xl shadow-black/20">
+                                Schedule Class
                                 <ArrowUpRight className="h-4 w-4 ml-2" />
                             </Button>
                         </CardContent>

@@ -10,6 +10,7 @@ interface User {
     role: string;
     permissions?: string[];
     avatar?: string;
+    hasUnlimitedInterviews?: boolean;
 }
 
 interface AuthContextType {

@@ -46,7 +46,10 @@ export default function InstructorLayout({ children }: { children: React.ReactNo
     const sidebarItems = [
         { href: '/instructor', icon: LayoutDashboard, label: 'Overview' },
         { href: '/instructor/courses', icon: BookOpen, label: 'My Courses' },
+        { href: '/instructor/batches', icon: Users, label: 'Batches' },
         { href: '/instructor/students', icon: Users, label: 'Students' },
+        { href: '/instructor/assessments', icon: MessageSquare, label: 'Assessments' },
+        { href: '/instructor/announcements', icon: Bell, label: 'Announcements' },
         { href: '/instructor/feedback', icon: MessageSquare, label: 'Feedback' },
         { href: '/instructor/settings', icon: Settings, label: 'Settings' },
     ]

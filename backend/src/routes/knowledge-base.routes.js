@@ -10,17 +10,18 @@ const prisma = new PrismaClient();
  * @desc    Get all knowledge base entries
  * @access  Private/Admin
  */
-router.get('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+router.get('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR'), async (req, res, next) => {
     try {
-        const { domain, search } = req.query;
+        const { domain, search, difficulty } = req.query;
 
         const where = {};
-        if (domain) where.domain = domain;
+        if (domain && domain !== 'all') where.domain = domain;
+        if (difficulty && difficulty !== 'all') where.difficulty = difficulty;
         if (search) {
             where.OR = [
                 { domain: { contains: search, mode: 'insensitive' } },
-                { role: { contains: search, mode: 'insensitive' } },
-                { question: { contains: search, mode: 'insensitive' } }
+                { topic: { contains: search, mode: 'insensitive' } },
+                { content: { contains: search, mode: 'insensitive' } }
             ];
         }
 
@@ -40,18 +41,18 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req, res
  * @desc    Create new knowledge base entry
  * @access  Private/Admin
  */
-router.post('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+router.post('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR'), async (req, res, next) => {
     try {
-        const { domain, role, question, beginnerAnswer, mediumAnswer, hardAnswer, status } = req.body;
+        const { domain, topic, content, answer, difficulty, status, type, codeSnippet, tags } = req.body;
 
         const entry = await prisma.knowledgeBase.create({
             data: {
                 domain,
-                role,
-                question,
-                beginnerAnswer,
-                mediumAnswer,
-                hardAnswer,
+                answer,
+                difficulty,
+                type: type || 'TECHNICAL',
+                codeSnippet,
+                tags: typeof tags === 'string' ? tags.split(',').map(t => t.trim()).filter(Boolean) : tags,
                 status: status || 'PUBLISHED'
             }
         });
@@ -67,19 +68,20 @@ router.post('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req, re
  * @desc    Update knowledge base entry
  * @access  Private/Admin
  */
-router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req, res, next) => {
+router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR'), async (req, res, next) => {
     try {
-        const { domain, role, question, beginnerAnswer, mediumAnswer, hardAnswer, status } = req.body;
+        const { domain, topic, content, answer, difficulty, status, type, codeSnippet, tags } = req.body;
 
         const entry = await prisma.knowledgeBase.update({
             where: { id: req.params.id },
             data: {
                 domain,
-                role,
-                question,
-                beginnerAnswer,
-                mediumAnswer,
-                hardAnswer,
+                topic,
+                content,
+                difficulty,
+                type,
+                codeSnippet,
+                tags: typeof tags === 'string' ? tags.split(',').map(t => t.trim()).filter(Boolean) : tags,
                 status
             }
         });
@@ -89,7 +91,6 @@ router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req, 
         next(error);
     }
 });
-
 /**
  * @route   DELETE /api/knowledge-base/:id
  * @desc    Delete knowledge base entry

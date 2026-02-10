@@ -85,6 +85,11 @@ export const courseApi = {
     enroll: (courseId: string) => api.post(`/courses/${courseId}/enroll`),
     getMyEnrollments: () => api.get('/courses/my/enrolled'),
     generate: (data: { topic: string; difficulty: string }) => api.post('/courses/generate', data),
+
+    // Learning Features
+    getLearnContent: (id: string) => api.get(`/courses/${id}/learn`),
+    completeLesson: (courseId: string, lessonId: string) => api.post(`/courses/${courseId}/lessons/${lessonId}/complete`),
+
     updateCurriculum: (id: string, data: { modules: unknown[] }) => api.put(`/courses/${id}/curriculum`, data),
 };
 
@@ -112,7 +117,7 @@ export const interviewApi = {
     getReport: (id: string) => api.get(`/interviews/${id}/report`),
     // AI Features
     nextQuestion: (id: string) => api.post(`/interviews/${id}/next-question`),
-    submitResponse: (id: string, data: { questionId: string; answer: string }) =>
+    submitResponse: (id: string, data: { questionId: string; answer: string; code?: string }) =>
         api.post(`/interviews/${id}/response`, data),
     trainAI: (data: unknown) => api.post('/interviews/train', data),
 };
@@ -154,6 +159,47 @@ export const certificateApi = {
     updateTemplate: (id: string, data: { name?: string; description?: string; designUrl?: string; previewUrl?: string; isDefault?: boolean; isActive?: boolean }) =>
         api.put(`/certificates/admin/templates/${id}`, data),
     deleteTemplate: (id: string) => api.delete(`/certificates/admin/templates/${id}`),
+};
+
+// AI Settings API
+export const aiSettingsApi = {
+    get: () => api.get('/ai-settings'),
+    update: (data: {
+        adaptiveDifficulty: boolean;
+        escalationThreshold: number;
+        initialDifficulty: string;
+        maxQuestions: number;
+        hrQuestionRatio: number;
+    }) => api.put('/ai-settings', data)
+};
+
+// Knowledge Base API
+export const knowledgeBaseApi = {
+    getAll: (params?: { domain?: string; search?: string; difficulty?: string }) =>
+        api.get('/knowledge-base', { params }),
+    create: (data: {
+        domain: string;
+        topic: string;
+        content: string;
+        difficulty: string;
+        answer?: string;
+    }) => api.post('/knowledge-base', data),
+    update: (id: string, data: {
+        domain?: string;
+        topic?: string;
+        content?: string;
+        difficulty?: string;
+        answer?: string;
+    }) => api.put(`/knowledge-base/${id}`, data),
+    delete: (id: string) => api.delete(`/knowledge-base/${id}`),
+    getStats: () => api.get('/knowledge-base/stats'),
+    generate: (data: {
+        domain: string;
+        role: string;
+        company?: string;
+        difficulty: string;
+        count: number;
+    }) => api.post('/ai/generate-questions', data)
 };
 
 export default api;

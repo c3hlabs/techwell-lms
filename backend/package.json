@@ -8,7 +8,8 @@
         "dev": "nodemon src/index.js",
         "db:push": "prisma db push",
         "db:generate": "prisma generate",
-        "db:studio": "prisma studio"
+        "db:studio": "prisma studio",
+        "build": "npm run db:generate"
     },
     "dependencies": {
         "@google/generative-ai": "^0.24.1",

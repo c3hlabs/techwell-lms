@@ -20,6 +20,15 @@ const updateProfileSchema = z.object({
  */
 router.get('/me', authenticate, async (req, res, next) => {
     try {
+        // Check for interview access
+        const hasInterviewAccess = await prisma.enrollment.findFirst({
+            where: {
+                userId: req.user.id,
+                hasInterviewAccess: true,
+                status: 'ACTIVE'
+            }
+        });
+
         const user = await prisma.user.findUnique({
             where: { id: req.user.id },
             select: {
@@ -40,7 +49,12 @@ router.get('/me', authenticate, async (req, res, next) => {
             }
         });
 
-        res.json({ user });
+        res.json({
+            user: {
+                ...user,
+                hasUnlimitedInterviews: !!hasInterviewAccess || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' // Admins get free access
+            }
+        });
     } catch (error) {
         next(error);
     }

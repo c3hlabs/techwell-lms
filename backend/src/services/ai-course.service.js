@@ -41,7 +41,8 @@ const generateCourseStructure = async (topic, difficulty) => {
                     "lessons": [
                         {
                             "title": "Lesson Title",
-                            "content": "Detailed outline of what will be covered (2-3 sentences)",
+                            "content": "Detailed educational content in Markdown format. Should be at least 3-4 paragraphs.",
+                            "videoUrl": "https://www.youtube.com/watch?v=dummy (or a relevant real link if known)",
                             "duration": Number (estimated seconds, e.g. 600 for 10 mins),
                             "order": 0,
                             "quizzes": [
@@ -62,7 +63,9 @@ const generateCourseStructure = async (topic, difficulty) => {
         2. Each Module must have at least 3 Lessons.
         3. Include at least 1 Quiz per Module (attached to the last lesson).
         4. "bannerUrl" should be a relevant Unsplash ID (keep the provided one as fallback if unsure).
-        5. Ensure content is high-quality and relevant to the difficulty level.
+        5. "videoUrl" should be a valid-looking YouTube URL (e.g., specific to the topic if possible, or a placeholder).
+        6. "content" MUST be rich markdown text, not just a summary.
+        7. Ensure content is high-quality and relevant to the difficulty level.
         `;
 
         const result = await model.generateContent(prompt);
@@ -92,8 +95,20 @@ const mockGenerate = (topic, difficulty) => {
         description: `Get started with the basics of ${topic}`,
         orderIndex: 0,
         lessons: [
-            { title: `What is ${topic}?`, content: `Overview of ${topic} and its importance.`, duration: 300, order: 0 },
-            { title: `Setting up your environment`, content: `Installation and setup guide.`, duration: 600, order: 1 }
+            {
+                title: `What is ${topic}?`,
+                content: `### Overview\n\n${topic} is a transformative technology that enables...\n\n### Key Concepts\n- Concept 1\n- Concept 2`,
+                videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                duration: 300,
+                order: 0
+            },
+            {
+                title: `Setting up your environment`,
+                content: `### Installation\n\n1. Download the installer...\n2. Run the setup wizard...\n\n\`\`\`bash\nnpm install ${topic.toLowerCase()}\n\`\`\``,
+                videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                duration: 600,
+                order: 1
+            }
         ]
     });
 

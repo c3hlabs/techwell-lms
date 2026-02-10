@@ -1,12 +1,30 @@
 "use client"
 
 import * as React from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { interviewApi } from '@/lib/api'
 import { useAuth } from '@/lib/auth-context'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import {
     Video,
     Calendar,
@@ -16,8 +34,15 @@ import {
     PlayCircle,
     Loader2,
     Plus,
-    TrendingUp
+    Sparkles,
+    FileText,
+    Upload,
+    Bot,
+    Briefcase,
+    Check,
+    ArrowRight
 } from 'lucide-react'
+import { InterviewAnalytics } from '@/components/admin/InterviewAnalytics'
 
 interface Interview {
     id: string
@@ -30,18 +55,19 @@ interface Interview {
     score?: number
 }
 
-const domains = [
-    { value: 'TECHNOLOGY', label: 'Technology' },
-    { value: 'DATA_SCIENCE', label: 'Data Science' },
+const DOMAINS = [
+    { value: 'TECHNOLOGY', label: 'Technology / Software' },
+    { value: 'DATA_SCIENCE', label: 'Data Science & AI' },
     { value: 'PRODUCT', label: 'Product Management' },
     { value: 'DESIGN', label: 'UI/UX Design' },
-    { value: 'BUSINESS', label: 'Business/Consulting' },
+    { value: 'BUSINESS', label: 'Business / Consulting' },
+    { value: 'FINANCE', label: 'Finance & Banking' },
 ]
 
-const difficulties = [
-    { value: 'EASY', label: 'Easy' },
-    { value: 'MEDIUM', label: 'Medium' },
-    { value: 'HARD', label: 'Hard' },
+const DIFFICULTIES = [
+    { value: 'BEGINNER', label: 'Beginner', desc: 'For freshers, 0-2 years experience' },
+    { value: 'INTERMEDIATE', label: 'Intermediate', desc: 'For mid-level, 2-5 years experience' },
+    { value: 'ADVANCED', label: 'Advanced', desc: 'For seniors, 5+ years experience' },
 ]
 
 export default function InterviewsPage() {
@@ -51,6 +77,25 @@ export default function InterviewsPage() {
     const [interviews, setInterviews] = React.useState<Interview[]>([])
     const [stats, setStats] = React.useState<{ total: number; completed: number; averageScore: number } | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
+    // const [isPotentialModalOpen, setPotentialModalOpen] = useState(false) // Removed unused state
+
+    // New Interview Form State
+    const [isOpen, setIsOpen] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [step, setStep] = useState(1) // 1: Details, 2: JD/Resume, 3: Review/Launch
+    const [formData, setFormData] = useState({
+        domain: 'TECHNOLOGY',
+        role: '',
+        company: '',
+        technology: '',
+        difficulty: 'INTERMEDIATE',
+        duration: 30,
+        jobDescription: '',
+        resumeFile: null as File | null,
+        resumeUrl: '',
+        panelCount: 1, // Simplified for quick start
+        type: 'INSTANT'
+    })
 
     React.useEffect(() => {
         if (!authLoading && !isAuthenticated) {
@@ -93,6 +138,46 @@ export default function InterviewsPage() {
         }
     }
 
+    const updateFormData = (field: string, value: any) => {
+        setFormData(prev => ({ ...prev, [field]: value }))
+    }
+
+    const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            updateFormData('resumeFile', file)
+            updateFormData('resumeUrl', file.name)
+        }
+    }
+
+    const handleCreateInterview = async () => {
+        if (!formData.role || !formData.technology) return
+
+        setIsSubmitting(true)
+        try {
+            const response = await interviewApi.create({
+                domain: formData.domain,
+                role: formData.role,
+                company: formData.company,
+                difficulty: formData.difficulty,
+                jobDescription: formData.jobDescription,
+                panelCount: 1, // Defaulting to 1 for quick start
+                duration: formData.duration,
+                technology: formData.technology,
+                selectedAvatars: ['tech-1'] // Default avatar
+            })
+
+            const interviewId = response.data.interview.id
+            setIsOpen(false)
+            // Redirect to start page (Tech Check)
+            router.push(`/interviews/${interviewId}/start`)
+        } catch (error) {
+            console.error('Failed to create interview:', error)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'SCHEDULED': return <Calendar className="h-4 w-4 text-blue-500" />
@@ -131,51 +216,156 @@ export default function InterviewsPage() {
                         Practice with AI-powered mock interviews and get instant feedback
                     </p>
                 </div>
-                <Button onClick={() => router.push('/interviews/new')} className="rounded-xl shadow-lg shadow-primary/20 hover:scale-105 transition-all">
-                    <Plus className="mr-2 h-4 w-4" /> New Interview
-                </Button>
+
+                <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                    <DialogTrigger asChild>
+                        <Button className="rounded-xl shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+                            <Plus className="mr-2 h-4 w-4" /> New Interview
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Start New Interview</DialogTitle>
+                            <DialogDescription>
+                                Setup your mock interview session in seconds.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid gap-6 py-4">
+                            {/* Simplified 2-Step Process */}
+                            {step === 1 && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Domain</Label>
+                                            <Select value={formData.domain} onValueChange={(v) => updateFormData('domain', v)}>
+                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    {DOMAINS.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Difficulty</Label>
+                                            <Select value={formData.difficulty} onValueChange={(v) => updateFormData('difficulty', v)}>
+                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    {DIFFICULTIES.map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Role *</Label>
+                                            <Input
+                                                placeholder="e.g. Frontend Dev"
+                                                value={formData.role}
+                                                onChange={(e) => updateFormData('role', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Tech Stack *</Label>
+                                            <Input
+                                                placeholder="e.g. React, Node.js"
+                                                value={formData.technology}
+                                                onChange={(e) => updateFormData('technology', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Target Company (Optional)</Label>
+                                        <Input
+                                            placeholder="e.g. Google, Amazon"
+                                            value={formData.company}
+                                            onChange={(e) => updateFormData('company', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {step === 2 && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                                    <div className="space-y-2">
+                                        <Label>Job Description (Optional)</Label>
+                                        <Textarea
+                                            placeholder="Paste the JD here for tailored questions..."
+                                            value={formData.jobDescription}
+                                            onChange={(e) => updateFormData('jobDescription', e.target.value)}
+                                            rows={4}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Resume (Optional)</Label>
+                                        <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer relative">
+                                            <input
+                                                type="file"
+                                                accept=".pdf,.doc,.docx"
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                onChange={handleResumeUpload}
+                                            />
+                                            {formData.resumeFile ? (
+                                                <div className="flex items-center justify-center gap-2 text-primary">
+                                                    <FileText className="h-5 w-5" />
+                                                    <span className="font-medium text-sm">{formData.resumeFile.name}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                                                    <Upload className="h-6 w-6 mb-1" />
+                                                    <span className="text-sm font-medium">Upload Resume</span>
+                                                    <span className="text-xs">PDF, DOCX (Max 5MB)</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            {step === 2 && (
+                                <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
+                            )}
+
+                            {step === 1 ? (
+                                <Button
+                                    onClick={() => setStep(2)}
+                                    disabled={!formData.role || !formData.technology}
+                                >
+                                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            ) : (
+                                <Button onClick={handleCreateInterview} disabled={isSubmitting}>
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Starting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="mr-2 h-4 w-4" /> Start Interview
+                                        </>
+                                    )}
+                                </Button>
+                            )}
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             {/* Stats */}
-            {stats && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Total Interviews
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.total}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Completed
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Average Score
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold flex items-center gap-2">
-                                {Math.round(stats.averageScore || 0)}%
-                                <TrendingUp className="h-5 w-5 text-green-500" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+            {/* Analytics Section */}
+            <div className="mb-8">
+                <InterviewAnalytics />
+            </div>
 
-            {/* Interview List */}
+            {/* Interview History */}
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Recent History</h2>
+            </div>
+
             {isLoading ? (
                 <div className="flex items-center justify-center py-20">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -185,7 +375,7 @@ export default function InterviewsPage() {
                     <Video className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
                     <h3 className="text-xl font-bold">No sessions practiced yet</h3>
                     <p className="text-muted-foreground mb-6">Launch your first AI mock interview to sharpen your skills.</p>
-                    <Button size="lg" onClick={() => router.push('/interviews/new')} className="rounded-xl shadow-xl shadow-primary/20">
+                    <Button size="lg" onClick={() => setIsOpen(true)} className="rounded-xl shadow-xl shadow-primary/20">
                         <Plus className="mr-2 h-5 w-5" /> Start Practice Interview
                     </Button>
                 </div>
