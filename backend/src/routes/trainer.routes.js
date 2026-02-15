@@ -5,7 +5,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 const trainerService = require('../services/trainer.service');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
 
 // ============= BATCH MANAGEMENT =============
 

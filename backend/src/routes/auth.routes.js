@@ -5,7 +5,7 @@ const { z } = require('zod');
 const { PrismaClient } = require('@prisma/client');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
 
 // Validation schemas
 const registerSchema = z.object({

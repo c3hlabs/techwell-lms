@@ -2,7 +2,7 @@ const express = require('express');
 const { authenticate, authorize } = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
 
 // GET /api/finance/stats - Dashboard Data
 router.get('/stats', authenticate, authorize(['SUPER_ADMIN', 'ADMIN']), async (req, res) => {

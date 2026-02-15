@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 // but for now I'll assume it's imported or I might leave it if it wasn't the error. 
 // Wait, if I replace the top, I might remove existing imports if they were there but hidden?
 // No, the view_file showed lines 1-3. 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/lib/auth-context";
+import { libraryApi } from "@/lib/api";
 
 interface Category {
     id: string;
@@ -51,7 +52,12 @@ export default function StudentLibraryPage() {
     // View Modal State
     const [viewResource, setViewResource] = useState<Resource | null>(null);
 
-    // ... existing useEffects and fetch functions
+    const handleShowBookmarks = () => {};
+    const handleSearch = () => {};
+    const handleCategoryClick = (category: Category) => {};
+    const handleDomainClick = (domain: Domain) => {};
+    const handleToggleBookmark = (resource: Resource) => {};
+    const handleDownload = (resourceId: string) => {};
 
     const handleView = async (resource: Resource) => {
         // Optimistically set resource for immediate feedback
@@ -59,7 +65,7 @@ export default function StudentLibraryPage() {
 
         // Track view count
         try {
-            await fetch(`${API_URL}/api/library/resources/${resource.id}`);
+            await libraryApi.trackView(resource.id);
         } catch (error) {
             console.error('Error tracking view:', error);
         }
@@ -254,7 +260,7 @@ export default function StudentLibraryPage() {
                     <div className="flex-1 overflow-auto p-1">
                         {viewResource?.type === 'PDF' && viewResource.fileUrl ? (
                             <iframe
-                                src={`${API_URL}${viewResource.fileUrl}`}
+                                src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}${viewResource.fileUrl}`}
                                 className="w-full h-full border rounded-md"
                                 title={viewResource.title}
                             />

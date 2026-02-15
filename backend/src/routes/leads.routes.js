@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 const { sendEmail } = require('../utils/emailSender');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
 const upload = multer({ dest: 'uploads/temp/' });
 
 /**

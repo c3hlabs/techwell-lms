@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const axios = require('axios');
 const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
 
 const sendEmail = async ({ to, subject, text, html, templateParams }) => {
     try {

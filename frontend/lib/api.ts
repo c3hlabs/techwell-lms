@@ -300,4 +300,14 @@ export const analyticsApi = {
     getBenchmark: () => api.get('/analytics/benchmark'),
 };
 
+// Library API
+export const libraryApi = {
+    trackView: (resourceId: string) => api.patch(`/library/resources/${resourceId}/view`),
+    download: (resourceId: string) => api.get(`/library/resources/${resourceId}/download`, { responseType: 'blob' }),
+    getBookmarks: () => api.get('/library/bookmarks'),
+    toggleBookmark: (resourceId: string) => api.post('/library/bookmarks', { resourceId }),
+    getResources: (params?: { category?: string; domain?: string; search?: string }) => api.get('/library/resources', { params }),
+    getCategories: () => api.get('/library/categories'),
+};
+
 export default api;

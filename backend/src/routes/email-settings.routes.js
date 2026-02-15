@@ -5,7 +5,7 @@ const axios = require('axios');
 const nodemailer = require('nodemailer');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
 
 /**
  * @route   GET /api/email/config

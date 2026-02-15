@@ -5,7 +5,7 @@ const { authenticate, authorize } = require('../middleware/auth');
 const aiService = require('../services/ai.service');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
 
 // Validation schemas
 const createInterviewSchema = z.object({

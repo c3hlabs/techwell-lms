@@ -4,7 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const intentEngine = require('../services/intentEngine.service');
 const behaviorAnalytics = require('../services/behaviorAnalytics.service');
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
 
 // Feature flag check middleware
 const checkFeatureFlag = (req, res, next) => {
